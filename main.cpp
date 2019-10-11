@@ -4,6 +4,7 @@
 namespace fs = std::filesystem;
 
 using table_id = std::int64_t;
+using field_id = std::int64_t;
 constexpr const char DELIM = ';';
 
 class UserError : std::logic_error {
@@ -16,10 +17,6 @@ void assertUser (const bool cond, const char* message) {
   if (!cond) {
     throw UserError(message);
   }
-}
-
-void throwUser (const char* message) {
-  throw UserError(message);
 }
 
 class Table {
@@ -80,9 +77,13 @@ bool is_word_char (char c) {
           c == '_';
 }
 
+bool is_digit (char c) {
+  return (c >= '0' && c <= '9');
+}
+
 bool is_word_begin_char (char c) {
   return (c >= 'a' && c <= 'z') ||
-          (c >= 'A' && c <= 'Z') ||
+         (c >= 'A' && c <= 'Z') ||
           c == '_';
 }
 
@@ -100,7 +101,7 @@ bool is_delim (char c) {
 
 class ParserHelper {
  public:
-  ParserHelper(const std::string_view& input, const std::size_t curr_pos = 0)
+  ParserHelper(std::string_view input, const std::size_t curr_pos = 0)
     : input(input), curr_pos(curr_pos) {}
 
   std::string_view get_word() {
@@ -150,26 +151,172 @@ class ParserHelper {
     return {};
   }
 
+  std::string_view get_int_literal() {
+    std::size_t start = std::string::npos;
+    std::size_t end = std::string::npos;
+    for (auto i = curr_pos; i < input.size(); i++) {
+      if (start == std::string::npos) {
+        if (is_digit(input[i])) {
+          start = i;
+        } else if (is_whitespace(input[i])) {
+          continue;
+        } else {
+          break;
+        }
+      } else {
+        if (!is_digit(input[i])) {
+          end = i;
+          break;
+        }
+      }
+    }
+    if (start == std::string::npos) {
+      // fail to find
+      return {};
+    }
+
+    curr_pos = end;
+    return input.substr(start, end - start);
+  }
+
  private:
-  const std::string_view& input;
+  std::string_view input;
   std::size_t curr_pos;
+};
+
+enum DBType : int64_t {
+  INT64 = 1,
+  STRING = 2
+};
+
+union DBValue {
+  int64_t int64;
+  std::string_view str;
+};
+
+DBType toDBType(std::string_view type_name) {
+  if (type_name == "string") {
+    return DBType::STRING;
+  } else if (type_name == "int" || type_name == "int64") {
+    return DBType::INT64;
+  } else {
+    throw UserError("Invalid type");
+  }
+}
+
+DBValue parseIntLiteral(std::string_view literal) {
+  return {atoi(literal.data())};
+}
+
+std::string_view toString(DBType type) {
+  if (type == DBType::STRING) {
+    return "string";
+  } else if (type == DBType::INT64) {
+    return "int64";
+  } else {
+    throw UserError("Invalid type while decoding");
+  }
+}
+
+class Field {
+ public:
+  DBType type;
+  std::string_view name;
+
+  Field(DBType type, std::string_view name)
+    : type(type), name(name) {}
 };
 
 class CreateQuery {
  public:
   std::string_view table_name;
+  std::vector<Field> fields;
   
-  static CreateQuery parse (const std::string_view& input) {
+  static CreateQuery parse (std::string_view input) {
     return CreateQuery(input);
   }
  private:
-  CreateQuery (const std::string_view& input) {
+  CreateQuery (std::string_view input) {
     ParserHelper ph(input);
     ph.get_word(); // CREATE
     auto object = ph.get_word(); // TABLE
-    auto name = ph.get_word();
-    assertUser(name.size() != 0, "Table name invalid");
-    table_name = name;
+    table_name = ph.get_word();
+    assertUser(table_name.size() != 0, "Table name invalid");
+    ph.get_token(); // (
+    while (true) {
+      auto col_name = ph.get_word();
+      auto type = ph.get_word();
+      auto next_tok = ph.get_token();
+      fields.push_back({toDBType(type), col_name});
+      if(next_tok == ")") {
+        break;
+      }
+    }
+  }
+};
+
+class InsertQuery {
+ public:
+  std::string_view table_name;
+  std::vector<std::string_view> fields;
+  std::vector<DBValue> values;
+  
+  static InsertQuery parse (std::string_view input) {
+    return InsertQuery(input);
+  }
+ private:
+  InsertQuery (std::string_view input) {
+    ParserHelper ph(input);
+    ph.get_word(); // INSERT
+    ph.get_word(); // INTO
+    table_name = ph.get_word();
+    assertUser(table_name.size() != 0, "Table name invalid");
+    ph.get_token(); // (
+    while (true) {
+      auto col_name = ph.get_word();
+      auto next_tok = ph.get_token();
+      fields.push_back(col_name);
+      if(next_tok == ")") {
+        break;
+      }
+    }
+    ph.get_token(); // )
+    ph.get_word(); // VALUES
+    ph.get_token(); // (
+    while (true) {
+      auto literal = ph.get_int_literal();
+      if (literal.size() == 0) {
+        break;
+      }
+      ph.get_token(); // ,
+      values.push_back(parseIntLiteral(literal));
+    }
+    
+  }
+};
+
+class SelectQuery {
+ public:
+  std::string_view table_name;
+  std::vector<std::string_view> fields;
+  
+  static SelectQuery parse (std::string_view input) {
+    return SelectQuery(input);
+  }
+ private:
+  SelectQuery (std::string_view input) {
+    ParserHelper ph(input);
+    ph.get_word(); // SELECT
+    while (true) {
+      auto col_name = ph.get_word();
+      auto next_tok = ph.get_token();
+      fields.push_back(col_name);
+      if(next_tok.size() == 0) {
+        break;
+      }
+    }
+    ph.get_word(); // FROM
+    table_name = ph.get_word();
   }
 };
 
@@ -185,10 +332,34 @@ class DB {
   }
 
   void execute (CreateQuery q) {
-    std::cout << "created table " << q.table_name << ";" << std::endl;
+    std::cout << "created table " << q.table_name << "(";
+    for(auto field : q.fields) {
+      std::cout << field.name << " " << toString(field.type) << ", ";
+    }
+    std::cout << ");\n" << std::endl;
   }
 
-  table_id create_table (const std::string_view name) {
+  void execute (InsertQuery q) {
+    std::cout << "inserted into table " << q.table_name << "(";
+    for(auto field : q.fields) {
+      std::cout << field << ", ";
+    }
+    std::cout << ") values (";
+    for(auto value : q.values) {
+      std::cout << value.int64 << ", ";
+    }
+    std::cout << ");\n" << std::endl;
+  }
+
+  void execute (SelectQuery q) {
+    std::cout << "selected ";
+    for(auto field : q.fields) {
+      std::cout << field << ", ";
+    }
+    std::cout << "from " << q.table_name << ";\n";
+  }
+
+  table_id create_table (std::string_view name) {
     const auto id = get_unique_table_id();
     const auto table_dir = tables_dir / std::to_string(id);
     fs::create_directory(table_dir);
@@ -196,10 +367,13 @@ class DB {
   }
 
  private:
-  table_id table_id_counter = 0;
+  int64_t unique_id_counter = 0;
   table_id get_unique_table_id () {
-    table_id_counter++;
-    return table_id_counter;
+    return ++unique_id_counter;
+  }
+
+  field_id get_unique_field_id () {
+    return ++unique_id_counter;
   }
 
   void initialize_file_structure (const fs::path base_dir) {
@@ -214,20 +388,25 @@ int main (int argc, const char** argv) {
   while (std::cin) {
     try {
       std::cout << "> "; 
-      std::string query_string;
+      std::string buffer;
+      const std::string& query_string = buffer;
 
-      std::getline(std::cin, query_string, ';');
-
+      std::getline(std::cin, buffer, ';');
+      if(std::cin.eof()) {
+        break;
+      }
       auto command = ParserHelper(query_string).get_word();
       if (command == "create") {
         db.execute(CreateQuery::parse(query_string));
+      } else if (command == "insert") {
+        db.execute(InsertQuery::parse(query_string));
+      } else if (command == "select") {
+        db.execute(SelectQuery::parse(query_string));
       } else {
-        throwUser("Invalid command");
+        throw UserError("Invalid command");
       }
     } catch (UserError e) {
       std::cout << e.what() << ". Please check the manual :)\n" << std::endl;
     }
   }
-
-  std::cout << db.create_table("users");
 }
