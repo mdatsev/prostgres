@@ -2,7 +2,12 @@
 #include <fstream>
 #include <filesystem>
 
-#include "lib/DB.hpp"
+#include "lib/DB.h"
+#include "lib/CreateQuery.h"
+#include "lib/InsertQuery.h"
+#include "lib/SelectQuery.h"
+#include "lib/errors.h"
+#include "lib/ParserHelper.h"
 
 int main (int argc, const char** argv) {
   DB db("./db");

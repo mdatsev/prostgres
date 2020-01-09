@@ -1,19 +1,16 @@
-#pragma once
-#include <string_view>
+#include <string>
 #include <vector>
-#include "DBTypes.hpp"
-#include "ParserHelper.hpp"
 
-class SelectQuery {
- public:
-  std::string_view table_name;
-  std::vector<std::string_view> fields;
-  
-  static SelectQuery parse (std::string_view input) {
+#include "SelectQuery.h"
+
+#include "ParserHelper.h"
+
+SelectQuery SelectQuery::parse (std::string input)
+                                               {
     return SelectQuery(input);
   }
- private:
-  SelectQuery (std::string_view input) {
+SelectQuery::SelectQuery (std::string input)
+                                  {
     ParserHelper ph(input);
     ph.get_word(); // SELECT
     while (true) {
@@ -27,4 +24,4 @@ class SelectQuery {
     ph.get_word(); // FROM
     table_name = ph.get_word();
   }
-};
+#undef LZZ_INLINE

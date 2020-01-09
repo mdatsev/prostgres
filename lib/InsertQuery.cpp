@@ -1,20 +1,17 @@
-#pragma once
-#include <string_view>
+#include <string>
 #include <vector>
-#include "DBTypes.hpp"
-#include "ParserHelper.hpp"
 
-class InsertQuery {
- public:
-  std::string_view table_name;
-  std::vector<std::string_view> fields;
-  std::vector<std::string_view> values;
-  
-  static InsertQuery parse (std::string_view input) {
+#include "InsertQuery.h"
+
+#include "ParserHelper.h"
+#include "errors.h"
+
+InsertQuery InsertQuery::parse (std::string input)
+                                               {
     return InsertQuery(input);
   }
- private:
-  InsertQuery (std::string_view input) {
+InsertQuery::InsertQuery (std::string input)
+                                  {
     ParserHelper ph(input);
     ph.get_word(); // INSERT
     ph.get_word(); // INTO
@@ -42,4 +39,3 @@ class InsertQuery {
     }
     
   }
-};

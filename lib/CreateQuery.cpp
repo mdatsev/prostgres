@@ -1,19 +1,16 @@
-#pragma once
-#include <string_view>
+#include <string>
 #include <vector>
-#include "DBTypes.hpp"
-#include "ParserHelper.hpp"
 
-class CreateQuery {
- public:
-  std::string_view table_name;
-  std::vector<Field> fields;
-  
-  static CreateQuery parse (std::string_view input) {
-    return CreateQuery(input);
-  }
- private:
-  CreateQuery (std::string_view input) {
+#include "CreateQuery.h"
+#include "ParserHelper.h"
+#include "errors.h"
+#include "DBTypes.h"
+
+CreateQuery CreateQuery::parse (std::string input) {
+  return CreateQuery(input);
+}
+
+CreateQuery::CreateQuery (std::string input)                                  {
     ParserHelper ph(input);
     ph.get_word(); // CREATE
     auto object = ph.get_word(); // TABLE
@@ -30,4 +27,4 @@ class CreateQuery {
       }
     }
   }
-};
+#undef LZZ_INLINE

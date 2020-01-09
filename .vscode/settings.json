@@ -48,7 +48,9 @@
       "iterator": "cpp",
       "numeric": "cpp",
       "random": "cpp",
-      "cinttypes": "cpp"
+      "cinttypes": "cpp",
+      "cstring": "cpp",
+      "variant": "cpp"
     },
     "editor.tabSize": 2
 }
