@@ -4,12 +4,11 @@
 
 using table_id = std::int64_t;
 using field_id = std::int64_t;
-using DBValue = std::variant<int64_t, std::string>;
 
 enum DBType : int64_t {
-  INT64 = 1,
-  STRING = 2
-};
+  INT64 = 0,
+  STRING = 1
+}; /* must be the same order */ using DBValue = std::variant<int64_t, std::string>;
 
 
 DBType toDBType (std::string type_name);

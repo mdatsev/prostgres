@@ -43,6 +43,7 @@ void Table::create(std::string const &name, std::vector<Field> const &fields) {
   page_map_file.open(page_map_path, mode);
   toast_file.open(toast_path, mode);
 }
+
 void Table::load(std::string const &name) {
   auto mode = std::ios::in | std::ios::out | std::ios::app | std::ios::binary;
   meta_file.open(meta_path, mode);
