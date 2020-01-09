@@ -11,7 +11,7 @@ class Table
 {
 public:
   const table_id id;
-  static Table create (const std::string& name, const std::vector <Field>& fields, const DB& db);
+  static Table create (const std::string& name, const std::vector <Field>& fields, DB& db);
   static Table load (const std::string& name, DB const & db);
   void insert (int value);
 private:
