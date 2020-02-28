@@ -7,3 +7,9 @@ void assertUser (bool const cond, char const * message) {
     throw UserError(message);
   }
 }
+
+void assertSystem (bool const cond, char const * message) {
+  if (!cond) {
+    throw SystemError(message);
+  }
+}

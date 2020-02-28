@@ -26,4 +26,5 @@ class DB {
   void initialize_file_structure();
   void load_global_metadata();
   void save_global_metadata();
+  table_id get_table_id(std::string name);
 };

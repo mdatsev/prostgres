@@ -25,4 +25,3 @@ CreateQuery::CreateQuery(std::string input) {
     }
   }
 }
-#undef LZZ_INLINE

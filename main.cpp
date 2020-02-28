@@ -34,6 +34,8 @@ int main (int argc, const char** argv) {
       }
     } catch (UserError e) {
       std::cout << e.what() << ". Please check the manual :)\n" << std::endl;
+    } catch (SystemError e) {
+      std::cout << "System error. " << e.what() << std::endl;
     }
   }
 }

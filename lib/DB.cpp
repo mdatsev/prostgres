@@ -5,6 +5,7 @@
 #include "DB.h"
 #include "Table.h"
 #include "serialize.h"
+#include "errors.h"
 
 DB::DB(fs::path base_dir)
     : base_dir{base_dir}, tables_dir{base_dir / "tables"} {
@@ -30,11 +31,18 @@ void DB::execute(InsertQuery q) {
   }
   std::cout << ");\n" << std::endl;
 
-  // auto t = Table::load(1, tables_dir / "1");
-  // for(auto value : q.values) {
-  //   t.insert(atoi(value.data()));
-  // }
+   auto t = Table::load(get_table_id(q.table_name), *this);
+  assertUser(t.nfields == q.values.size(), "Incorrect number of values");
+//  assertUser(t.nfields == q.fields.size(), "Incorrect number of fields");
+
+  std::vector<DBValue> value_vector(t.nfields);
+  for (int i = 0; i < q.values.size(); i++) {
+    value_vector[i] = DBValue(atoi(q.values[i].c_str()));
+  }
+
+  t.insert(value_vector);
 }
+
 void DB::execute(SelectQuery q) {
   std::cout << "selected ";
   for (auto field : q.fields) {
@@ -42,6 +50,7 @@ void DB::execute(SelectQuery q) {
   }
   std::cout << "from " << q.table_name << ";\n";
 }
+
 table_id DB::get_unique_id() { 
   ++unique_id_counter;
   save_global_metadata();
@@ -65,4 +74,10 @@ void DB::load_global_metadata() {
 void DB::save_global_metadata() {
   std::fstream ifs(base_dir / "meta", std::ios::out | std::ios::binary);
   write_table_id(ifs, unique_id_counter);
+}
+
+
+table_id DB::get_table_id(std::string name) {
+  // TODO lookup real name
+  return atoi(name.c_str() + 1);
 }
