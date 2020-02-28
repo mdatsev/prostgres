@@ -5,8 +5,8 @@
 
 namespace fs = std::filesystem;
 
-#include "DBTypes.h"
 #include "CreateQuery.h"
+#include "DBTypes.h"
 #include "InsertQuery.h"
 #include "SelectQuery.h"
 

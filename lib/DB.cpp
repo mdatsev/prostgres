@@ -1,11 +1,11 @@
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <unordered_map>
 
 #include "DB.h"
 #include "Table.h"
-#include "serialize.h"
 #include "errors.h"
+#include "serialize.h"
 
 DB::DB(fs::path base_dir)
     : base_dir{base_dir}, tables_dir{base_dir / "tables"} {
@@ -17,7 +17,8 @@ void DB::execute(CreateQuery q) {
   for (auto field : q.fields) {
     std::cout << field.name << " " << toString(field.type) << ", ";
   }
-  std::cout << ");\n" << std::endl;
+  std::cout << ");\n"
+            << std::endl;
   Table::create(q.table_name, q.fields, *this);
 }
 void DB::execute(InsertQuery q) {
@@ -29,11 +30,12 @@ void DB::execute(InsertQuery q) {
   for (auto value : q.values) {
     std::cout << value << ", ";
   }
-  std::cout << ");\n" << std::endl;
+  std::cout << ");\n"
+            << std::endl;
 
-   auto t = Table::load(get_table_id(q.table_name), *this);
+  auto t = Table::load(get_table_id(q.table_name), *this);
   assertUser(t.nfields == q.values.size(), "Incorrect number of values");
-//  assertUser(t.nfields == q.fields.size(), "Incorrect number of fields");
+  //  assertUser(t.nfields == q.fields.size(), "Incorrect number of fields");
 
   std::vector<DBValue> value_vector(t.nfields);
   for (int i = 0; i < q.values.size(); i++) {
@@ -51,10 +53,10 @@ void DB::execute(SelectQuery q) {
   std::cout << "from " << q.table_name << ";\n";
 }
 
-table_id DB::get_unique_id() { 
+table_id DB::get_unique_id() {
   ++unique_id_counter;
   save_global_metadata();
-  return unique_id_counter; 
+  return unique_id_counter;
 }
 void DB::initialize_file_structure() {
   fs::create_directory(base_dir);
@@ -62,9 +64,9 @@ void DB::initialize_file_structure() {
 }
 void DB::load_global_metadata() {
   std::fstream ifs(base_dir / "meta", std::ios::in | std::ios::binary);
-  ifs.seekg( 0, std::ios::end );
+  ifs.seekg(0, std::ios::end);
   std::streampos fsize = ifs.tellg();
-  ifs.seekg( 0, std::ios::beg );
+  ifs.seekg(0, std::ios::beg);
   if (fsize == 0) {
     unique_id_counter = 0;
   } else {
@@ -75,7 +77,6 @@ void DB::save_global_metadata() {
   std::fstream ifs(base_dir / "meta", std::ios::out | std::ios::binary);
   write_table_id(ifs, unique_id_counter);
 }
-
 
 table_id DB::get_table_id(std::string name) {
   // TODO lookup real name

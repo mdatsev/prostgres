@@ -2,9 +2,9 @@
 #include <vector>
 
 #include "CreateQuery.h"
+#include "DBTypes.h"
 #include "ParserHelper.h"
 #include "errors.h"
-#include "DBTypes.h"
 
 CreateQuery CreateQuery::parse(std::string input) { return CreateQuery(input); }
 

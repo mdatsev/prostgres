@@ -18,7 +18,7 @@
 
 void Table::insert(std::vector<DBValue> row) {
   data_file.seekg(0, std::ios::end);
-  for (auto& value : row) {
+  for (auto &value : row) {
     write_DBValue(data_file, value);
   }
 }
