@@ -8,9 +8,15 @@
 #include "serialize.h"
 
 DB::DB(fs::path base_dir)
-    : base_dir{base_dir}, tables_dir{base_dir / "tables"} {
-  initialize_file_structure();
-  load_global_metadata();
+    : base_dir{base_dir}, tables_dir{base_dir / "tables"} 
+{
+  if(fs::create_directory(base_dir)) {
+    fs::create_directory(tables_dir);
+    unique_id_counter = 0;
+    save_global_metadata();
+  } else {
+    load_global_metadata();
+  };
 }
 void DB::execute(CreateQuery q) {
   std::cout << "created table " << q.table_name << "(";
@@ -72,10 +78,7 @@ table_id DB::get_unique_id() {
   save_global_metadata();
   return unique_id_counter;
 }
-void DB::initialize_file_structure() {
-  fs::create_directory(base_dir);
-  fs::create_directory(tables_dir);
-}
+
 void DB::load_global_metadata() {
   std::fstream ifs(base_dir / "meta", std::ios::in | std::ios::binary);
   ifs.seekg(0, std::ios::end);
