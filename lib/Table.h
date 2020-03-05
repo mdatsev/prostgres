@@ -6,6 +6,7 @@ namespace fs = std::filesystem;
 
 #include "DB.h"
 #include "DBTypes.h"
+#include "serialize.h"
 
 class Table {
  public:
@@ -13,9 +14,11 @@ class Table {
   static Table create(const std::string& name, const std::vector<Field>& fields, DB& db);
   static Table load(table_id name, DB const& db);
   void insert(std::vector<DBValue> row);
+  void select(); // todo
   int32_t nfields;
 
  private:
+  RowSerializer row_serializer;
   fs::path data_path;
   fs::path page_map_path;
   fs::path toast_path;

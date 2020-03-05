@@ -16,3 +16,12 @@ void serialize_meta_int(meta_int value, char(storage)[]);
 void write_meta_int(std::fstream& file, meta_int value);
 void deserialize_meta_int(meta_int& value, char(storage)[]);
 meta_int read_meta_int(std::fstream& file);
+
+class RowSerializer {
+  std::vector<DBType> types;
+ public:
+  size_t storage_size();
+  RowSerializer(std::vector<DBType> types = {});
+  void read_packed_row(std::fstream &file, char storage[]);
+  void print_packed_row(char storage[]);
+};

@@ -1,5 +1,8 @@
 #include <cstring>
 #include <fstream>
+#include <vector>
+#include <iostream>
+#include <iomanip>
 
 #include "serialize.h"
 #include "DBTypes.h"
@@ -60,4 +63,33 @@ meta_int read_meta_int (std::fstream & file) {
   file.read(storage, sizeof(value));
   deserialize_meta_int(value, storage);
   return value;
+}
+
+
+size_t RowSerializer::storage_size() {
+  return types.size() * sizeof(INT64_type); // for now todo
+}
+
+RowSerializer::RowSerializer(std::vector<DBType> types) : types {types} {
+  // assertSystem(types.size() != 0, "Empty row!");
+}
+
+void RowSerializer::read_packed_row(std::fstream &file, char storage[]) {
+  char* curr = storage;
+  for (auto& t : types) {
+    assertUser(t == INT64, "Unsupported type in table");
+    file.read(curr, sizeof(INT64_type));
+    curr += sizeof(INT64_type);
+  }
+}
+void RowSerializer::print_packed_row(char storage[]) {
+  char* curr = storage;
+  std::cout << "|";
+  for (auto& t : types) {
+    assertUser(t == INT64, "Unsupported type in table");
+    INT64_type value;
+    std::memcpy((void*)&value, curr, sizeof(INT64_type));
+    std::cout << std::setw(9) << std::to_string(value) << "|";
+    curr += sizeof(INT64_type);
+  }
 }

@@ -35,7 +35,7 @@ void DB::execute(InsertQuery q) {
 
   auto t = Table::load(get_table_id(q.table_name), *this);
   assertUser(t.nfields == q.values.size(), "Incorrect number of values");
-  //  assertUser(t.nfields == q.fields.size(), "Incorrect number of fields");
+  assertUser(t.nfields == q.fields.size(), "Incorrect number of fields");
 
   std::vector<DBValue> value_vector(t.nfields);
   for (int i = 0; i < q.values.size(); i++) {
@@ -45,12 +45,26 @@ void DB::execute(InsertQuery q) {
   t.insert(value_vector);
 }
 
+void print_results(std::vector<std::vector<DBValue>> results) {
+  for (auto& row : results) {
+    std::cout << "|";
+    for (auto& value : row) {
+      std::cout << std::to_string(std::get<INT64_type>(value)) << "|";
+    }
+    std::cout << std::endl;
+  }
+}
+
 void DB::execute(SelectQuery q) {
   std::cout << "selected ";
   for (auto field : q.fields) {
     std::cout << field << ", ";
   }
   std::cout << "from " << q.table_name << ";\n";
+
+  Table t = Table::load(get_table_id(q.table_name), *this);
+  t.select(); // todo
+
 }
 
 table_id DB::get_unique_id() {
