@@ -4,20 +4,20 @@
 
 namespace fs = std::filesystem;
 
-#include "DB.h"
 #include "DBTypes.h"
 #include "serialize.h"
-
+class DB;
 class Table {
  public:
   const table_id id;
-  static Table create(const std::string& name, const std::vector<Field>& fields, DB& db);
-  static Table load(table_id name, DB const& db);
-  void insert(std::vector<DBValue> row);
-  void select(); // todo
+  Table(table_id id, const std::string& name, const std::vector<Field>& fields, DB& db); // create
+  Table(table_id id, DB const& db); // load
+  void insert(InsertQuery q);
+  void select();  // todo
   int32_t nfields;
 
  private:
+  void load_paths();
   RowSerializer row_serializer;
   fs::path data_path;
   fs::path page_map_path;
@@ -28,7 +28,6 @@ class Table {
   std::fstream page_map_file;
   std::fstream toast_file;
   const DB& db;
-  Table(const table_id id, const DB& db);
   void create(std::string const& name, std::vector<Field> const& fields);
   void load(table_id id);
 };

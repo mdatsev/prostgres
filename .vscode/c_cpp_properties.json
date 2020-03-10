@@ -8,7 +8,7 @@
             "defines": [],
             "compilerPath": "/usr/bin/g++-8",
             "cStandard": "c11",
-            "cppStandard": "c++17",
+            "cppStandard": "c++2a",
             "intelliSenseMode": "gcc-x64"
         }
     ],

@@ -17,7 +17,7 @@ for t in range(ntables):
   print(f"create table x ({','.join(['x int'] * ncols)});")
   
   for r in range(nrows):
-    print(f"insert into _{t+1} ({','.join(['x'] * ncols)}) values (", end='')
+    print(f"insert into _last ({','.join(['x'] * ncols)}) values (", end='')
     for c in range(ncols):
       print(get_value(), end=('' if c==ncols-1 else ','))
     print(');')

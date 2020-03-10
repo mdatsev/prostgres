@@ -50,7 +50,8 @@
       "random": "cpp",
       "cinttypes": "cpp",
       "cstring": "cpp",
-      "variant": "cpp"
+      "variant": "cpp",
+      "iomanip": "cpp"
     },
     "editor.tabSize": 2
 }

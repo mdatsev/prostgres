@@ -32,4 +32,6 @@
 *.app
 
 db
-benchmark.sql
+benchmark*.sql
+callgrind.out.*
+perf-graph.svg

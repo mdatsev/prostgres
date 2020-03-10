@@ -24,4 +24,6 @@ class RowSerializer {
   RowSerializer(std::vector<DBType> types = {});
   void read_packed_row(std::fstream &file, char storage[]);
   void print_packed_row(char storage[]);
+  void print_row(std::fstream &file);
+  void write_row(std::fstream &file, std::vector<std::string> literals);
 };

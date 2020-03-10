@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <unordered_map>
+#include <utility>
 
 #include "DB.h"
 #include "Table.h"
@@ -8,9 +9,8 @@
 #include "serialize.h"
 
 DB::DB(fs::path base_dir)
-    : base_dir{base_dir}, tables_dir{base_dir / "tables"} 
-{
-  if(fs::create_directory(base_dir)) {
+    : base_dir{base_dir}, tables_dir{base_dir / "tables"} {
+  if (fs::create_directory(base_dir)) {
     fs::create_directory(tables_dir);
     unique_id_counter = 0;
     save_global_metadata();
@@ -19,36 +19,46 @@ DB::DB(fs::path base_dir)
   };
 }
 void DB::execute(CreateQuery q) {
-  std::cout << "created table " << q.table_name << "(";
-  for (auto field : q.fields) {
-    std::cout << field.name << " " << toString(field.type) << ", ";
+  if (!silent) {
+    std::cout << "created table " << q.table_name << "(";
+    for (auto field : q.fields) {
+      std::cout << field.name << " " << toString(field.type) << ", ";
+    }
+    std::cout << ");\n"
+              << std::endl;
   }
-  std::cout << ");\n"
-            << std::endl;
-  Table::create(q.table_name, q.fields, *this);
+  table_id id = get_unique_id();
+  loaded_tables.emplace(std::piecewise_construct,
+                        std::forward_as_tuple(id), 
+                        std::forward_as_tuple(id, q.table_name, q.fields, *this));
 }
 void DB::execute(InsertQuery q) {
-  std::cout << "inserted into table " << q.table_name << "(";
-  for (auto field : q.fields) {
-    std::cout << field << ", ";
+  if (!silent) {
+    std::cout << "inserted into table " << q.table_name << "(";
+    for (auto field : q.fields) {
+      std::cout << field << ", ";
+    }
+    std::cout << ") values (";
+    for (auto value : q.values) {
+      std::cout << value << ", ";
+    }
+    std::cout << ");\n"
+              << std::endl;
   }
-  std::cout << ") values (";
-  for (auto value : q.values) {
-    std::cout << value << ", ";
-  }
-  std::cout << ");\n"
-            << std::endl;
+  table_id id = get_table_id(q.table_name);
 
-  auto t = Table::load(get_table_id(q.table_name), *this);
+  auto cache_iter = loaded_tables.find(id);
+  if (cache_iter == loaded_tables.end()) {
+    std::tie(cache_iter, std::ignore)
+      = loaded_tables.emplace(std::piecewise_construct,
+                              std::forward_as_tuple(id),
+                              std::forward_as_tuple(id, *this));
+  }
+  Table& t = (*cache_iter).second;
   assertUser(t.nfields == q.values.size(), "Incorrect number of values");
   assertUser(t.nfields == q.fields.size(), "Incorrect number of fields");
 
-  std::vector<DBValue> value_vector(t.nfields);
-  for (int i = 0; i < q.values.size(); i++) {
-    value_vector[i] = DBValue(atoi(q.values[i].c_str()));
-  }
-
-  t.insert(value_vector);
+  t.insert(q);
 }
 
 void print_results(std::vector<std::vector<DBValue>> results) {
@@ -62,15 +72,15 @@ void print_results(std::vector<std::vector<DBValue>> results) {
 }
 
 void DB::execute(SelectQuery q) {
-  std::cout << "selected ";
-  for (auto field : q.fields) {
-    std::cout << field << ", ";
+  if (!silent) {
+    std::cout << "selected ";
+    for (auto field : q.fields) {
+      std::cout << field << ", ";
+    }
+    std::cout << "from " << q.table_name << ";\n";
   }
-  std::cout << "from " << q.table_name << ";\n";
-
-  Table t = Table::load(get_table_id(q.table_name), *this);
-  t.select(); // todo
-
+  Table t(get_table_id(q.table_name), *this);
+  t.select();  // todo
 }
 
 table_id DB::get_unique_id() {
@@ -96,6 +106,12 @@ void DB::save_global_metadata() {
 }
 
 table_id DB::get_table_id(std::string name) {
-  // TODO lookup real name
+  if (name == "_last") {
+    return unique_id_counter;
+  }
   return atoi(name.c_str() + 1);
+}
+
+void DB::set_silent(bool val) {
+  silent = val;
 }

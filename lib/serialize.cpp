@@ -93,3 +93,20 @@ void RowSerializer::print_packed_row(char storage[]) {
     curr += sizeof(INT64_type);
   }
 }
+
+void RowSerializer::print_row(std::fstream &file) {
+  std::cout << "|";
+  for (auto& t : types) {
+    assertUser(t == INT64, "Unsupported type in table");
+    char buff[sizeof(INT64_type)];
+    file.read(buff, sizeof(INT64_type));
+    std::cout << std::setw(9) << std::to_string(*(INT64_type*)buff) << "|";
+  }
+}
+
+void RowSerializer::write_row(std::fstream &file, std::vector<std::string> literals) {
+  for (auto& t : literals) {
+    INT64_type value = atoll(t.c_str());
+    file.write((char*)&value, sizeof(INT64_type));
+  }
+}

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
+#include <unistd.h>
 
 #include "lib/DB.h"
 #include "lib/CreateQuery.h"
@@ -9,12 +10,24 @@
 #include "lib/errors.h"
 #include "lib/ParserHelper.h"
 
-int main (int argc, const char** argv) {
+int main (int argc, char** argv) {
+
+  bool opt_silent = false;
+
+  switch (getopt(argc, argv, "s")) {
+    case 's':
+      opt_silent = true;
+      break;
+  }
+
   DB db("./db");
+  db.set_silent(opt_silent);
   
   while (std::cin) {
     try {
-      std::cout << "> "; 
+      if (!opt_silent) {
+        std::cout << "> "; 
+      }
       std::string buffer;
       const std::string& query_string = buffer;
 
@@ -33,9 +46,9 @@ int main (int argc, const char** argv) {
         throw UserError("Invalid command");
       }
     } catch (UserError e) {
-      std::cout << e.what() << ". Please check the manual :)\n" << std::endl;
+      std::cerr << e.what() << ". Please check the manual :)\n" << std::endl;
     } catch (SystemError e) {
-      std::cout << "System error. " << e.what() << std::endl;
+      std::cerr << "System error. " << e.what() << std::endl;
     }
   }
 }
