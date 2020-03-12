@@ -19,7 +19,13 @@ bool is_word_begin_char(char c) {
          c == '_';
 }
 bool is_token_char(char c) {
-  return c == '(' || c == ',' || c == ')';
+  return c == '(' ||
+         c == ',' || 
+         c == ')' ||
+         c == '=' ||
+         c == '<' ||
+         c == '>' ||
+         c == '!';
 }
 bool is_whitespace(char c) {
   return c == ' ' || c == '\t' || c == '\n';

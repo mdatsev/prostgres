@@ -26,3 +26,22 @@ std::string toString(DBType type) {
   }
 }
 Field::Field(DBType type, std::string name) : type(type), name(name) {}
+
+Op parseOp(std::string str) {
+  if (str == "<=") return Op::le;
+  if (str == ">=") return Op::ge;
+  if (str == "<" ) return Op::lt;
+  if (str == ">" ) return Op::gt;
+  if (str == "==") return Op::eq;
+  if (str == "!=") return Op::ne;
+  throw UserError("Invalid operator");
+}
+
+bool use_op(INT64_type lhs, Op op, INT64_type rhs) {
+  if (op == Op::le) return lhs <= rhs;
+  if (op == Op::ge) return lhs >= rhs;
+  if (op == Op::lt) return lhs <  rhs;
+  if (op == Op::gt) return lhs >  rhs;
+  if (op == Op::eq) return lhs == rhs;
+  if (op == Op::ne) return lhs != rhs;
+}

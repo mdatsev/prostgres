@@ -45,8 +45,15 @@ void DB::execute(InsertQuery q) {
     std::cout << ");\n"
               << std::endl;
   }
-  table_id id = get_table_id(q.table_name);
+  Table& t = load_table(q.table_name);
+  assertUser(t.nfields == q.values.size(), "Incorrect number of values");
+  assertUser(t.nfields == q.fields.size(), "Incorrect number of fields");
 
+  t.insert(q);
+}
+
+Table& DB::load_table (std::string name) {
+  table_id id = get_table_id(name);
   auto cache_iter = loaded_tables.find(id);
   if (cache_iter == loaded_tables.end()) {
     std::tie(cache_iter, std::ignore)
@@ -54,11 +61,7 @@ void DB::execute(InsertQuery q) {
                               std::forward_as_tuple(id),
                               std::forward_as_tuple(id, *this));
   }
-  Table& t = (*cache_iter).second;
-  assertUser(t.nfields == q.values.size(), "Incorrect number of values");
-  assertUser(t.nfields == q.fields.size(), "Incorrect number of fields");
-
-  t.insert(q);
+  return (*cache_iter).second;
 }
 
 void print_results(std::vector<std::vector<DBValue>> results) {
@@ -77,10 +80,14 @@ void DB::execute(SelectQuery q) {
     for (auto field : q.fields) {
       std::cout << field << ", ";
     }
-    std::cout << "from " << q.table_name << ";\n";
+    std::cout << "from " << q.table_name;
+    if (q.conditional) {
+      std::cout << "where " << q.condition.column << (int)q.condition.op << q.condition.value << ";\n";
+    }
+    std::cout << ";\n";
   }
-  Table t(get_table_id(q.table_name), *this);
-  t.select();  // todo
+  Table& t = load_table(q.table_name);
+  t.select(q);  // todo
 }
 
 table_id DB::get_unique_id() {

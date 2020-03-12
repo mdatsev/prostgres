@@ -13,7 +13,7 @@ class Table {
   Table(table_id id, const std::string& name, const std::vector<Field>& fields, DB& db); // create
   Table(table_id id, DB const& db); // load
   void insert(InsertQuery q);
-  void select();  // todo
+  void select(SelectQuery q);
   int32_t nfields;
 
  private:

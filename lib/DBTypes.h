@@ -23,3 +23,14 @@ class Field {
   std::string name;
   Field(DBType type, std::string name);
 };
+
+enum class Op {
+  le,
+  ge,
+  lt,
+  gt,
+  eq,
+  ne
+};
+Op parseOp(std::string str);
+bool use_op(INT64_type lhs, Op op, INT64_type rhs);

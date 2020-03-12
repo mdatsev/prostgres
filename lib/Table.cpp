@@ -73,14 +73,15 @@ void Table::load(table_id id) {
   row_serializer = RowSerializer(types);
 }
 
-void Table::select() {
+void Table::select(SelectQuery q) {
   // int curr = data_file.tellg();
   data_file.seekg(0, data_file.end);
   int length = data_file.tellg();
   data_file.seekg(0, data_file.beg);
   // char arr[row_serializer.storage_size()];
+  int row_size = row_serializer.storage_size();
   for (int i = 0; data_file.tellg() < length; i++) {
-    row_serializer.print_row(data_file);
-    std::cout << std::endl;
+    row_serializer.print_row(data_file); // i * rowsize;
+    std::cout << '\n';
   }
 }

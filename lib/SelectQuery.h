@@ -1,14 +1,5 @@
 #pragma once
-
-enum class Op {
-  le,
-  ge,
-  lt,
-  gt,
-  eq,
-  ne
-};
-
+#include "DBTypes.h"
 struct Condition {
   std::string column;
   Op op;

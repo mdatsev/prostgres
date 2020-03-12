@@ -25,6 +25,7 @@ class DB {
   void set_silent(bool);
 
  private:
+  Table& load_table(std::string name);
   bool silent;
   int64_t unique_id_counter;
   void initialize_file_structure();

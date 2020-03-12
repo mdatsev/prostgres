@@ -1,22 +1,14 @@
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include "SelectQuery.h"
 #include "errors.h"
 #include "ParserHelper.h"
+#include "DBTypes.h"
 
 SelectQuery SelectQuery::parse(std::string input) {
   return SelectQuery(input);
-}
-
-Op parseOp(std::string str) {
-  if (str == "<=") return Op::le;
-  if (str == ">=") return Op::ge;
-  if (str == "<" ) return Op::lt;
-  if (str == ">" ) return Op::gt;
-  if (str == "==") return Op::eq;
-  if (str == "!=") return Op::ne;
-  throw UserError("Invalid operator");
 }
 
 SelectQuery::SelectQuery(std::string input) {
