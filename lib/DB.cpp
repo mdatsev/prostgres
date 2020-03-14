@@ -8,16 +8,26 @@
 #include "errors.h"
 #include "serialize.h"
 
+const table_id table_names_db_id = 0;
+const table_id user_db_start_id = 1;
+
 DB::DB(fs::path base_dir)
     : base_dir{base_dir}, tables_dir{base_dir / "tables"} {
   if (fs::create_directory(base_dir)) {
     fs::create_directory(tables_dir);
-    unique_id_counter = 0;
+    unique_id_counter = user_db_start_id;
     save_global_metadata();
+    names_table = new Table(table_names_db_id, std::string{"db_table_names"}, std::vector<Field>{{DBType::table_id, "id"}, {DBType::string, "name"}}, *this);
   } else {
     load_global_metadata();
+    names_table = new Table(table_names_db_id, *this);
   };
 }
+
+DB::~DB() {
+  delete names_table;
+}
+
 void DB::execute(CreateQuery q) {
   if (!silent) {
     std::cout << "created table " << q.table_name << "(";
@@ -31,6 +41,7 @@ void DB::execute(CreateQuery q) {
   loaded_tables.emplace(std::piecewise_construct,
                         std::forward_as_tuple(id), 
                         std::forward_as_tuple(id, q.table_name, q.fields, *this));
+  names_table->insert({DBValue(std::in_place_index<(int)DBType::table_id>, id), DBValue(q.table_name)});
 }
 void DB::execute(InsertQuery q) {
   if (!silent) {
@@ -68,7 +79,7 @@ void print_results(std::vector<std::vector<DBValue>> results) {
   for (auto& row : results) {
     std::cout << "|";
     for (auto& value : row) {
-      std::cout << std::to_string(std::get<INT64_type>(value)) << "|";
+      std::cout << std::to_string(std::get<(int)DBType::int64>(value)) << "|";
     }
     std::cout << std::endl;
   }

@@ -16,7 +16,7 @@ SelectQuery::SelectQuery(std::string input) {
   ph.get_word();  // SELECT
   while (true) {
     auto col_name = ph.get_word();
-    auto next_tok = ph.get_token();
+    auto next_tok = ph.get_token(); // ,
     fields.push_back(col_name);
     if (next_tok.size() == 0) {
       break;

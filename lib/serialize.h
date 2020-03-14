@@ -20,10 +20,10 @@ meta_int read_meta_int(std::fstream& file);
 class RowSerializer {
   std::vector<DBType> types;
  public:
-  size_t storage_size();
   RowSerializer(std::vector<DBType> types = {});
   void read_packed_row(std::fstream &file, char storage[]);
   void print_packed_row(char storage[]);
   void print_row(std::fstream &file);
   void write_row(std::fstream &file, std::vector<std::string> literals);
+  void write_row(std::fstream &file, std::vector<DBValue> row);
 };

@@ -32,7 +32,9 @@ InsertQuery::InsertQuery(std::string input) {
     if (literal.size() == 0) {
       break;
     }
-    ph.get_token();  // ,
     values.push_back(literal);
+    if (ph.get_token() == ")") {
+      break;
+    };  // ,
   }
 }

@@ -8,18 +8,18 @@
 
 DBType toDBType(std::string type_name) {
   if (type_name == "string") {
-    return DBType::STRING;
+    return DBType::string;
   } else if (type_name == "int" || type_name == "int64") {
-    return DBType::INT64;
+    return DBType::int64;
   } else {
     throw UserError("Invalid type");
   }
 }
-DBValue parseIntLiteral(std::string literal) { return {atoi(literal.c_str())}; }
+DBValue parseIntLiteral(std::string literal) { return DBValue(std::in_place_index<(int)DBType::int64>, atoi(literal.c_str())); }
 std::string toString(DBType type) {
-  if (type == DBType::STRING) {
+  if (type == DBType::string) {
     return "string";
-  } else if (type == DBType::INT64) {
+  } else if (type == DBType::int64) {
     return "int64";
   } else {
     throw UserError("Invalid type while decoding");

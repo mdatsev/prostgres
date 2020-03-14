@@ -84,17 +84,25 @@ std::string ParserHelper::get_token() {
 std::string ParserHelper::get_literal() {
   std::size_t start = std::string::npos;
   std::size_t end = std::string::npos;
+  bool numeric;
   for (auto i = curr_pos; i < input.size(); i++) {
     if (start == std::string::npos) {
       if (is_digit(input[i]) || input[i] == '-') {
+        numeric = true;
         start = i;
+      } else if (input[i] == '\'') {
+        numeric = false;
+        start = i + 1;
       } else if (is_whitespace(input[i])) {
         continue;
       } else {
         break;
       }
     } else {
-      if (!is_digit(input[i])) {
+      if (numeric && !is_digit(input[i])) {
+        end = i;
+        break;
+      } else if (!numeric && input[i] == '\'') {
         end = i;
         break;
       }
@@ -104,7 +112,10 @@ std::string ParserHelper::get_literal() {
     // fail to find
     return {};
   }
-
-  curr_pos = end;
+  if (numeric) {
+    curr_pos = end;
+  } else {
+    curr_pos = end + 1;
+  }
   return input.substr(start, end - start);
 }

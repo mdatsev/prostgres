@@ -32,8 +32,8 @@ table_id read_table_id(std::fstream &file)
 }
 
 void serialize_DBValue (const DBValue& value, char (storage) []) {
-  assertSystem(value.index() == INT64, "Unsupported type!"); // only supporting int64 for now
-  auto& raw_value = std::get<INT64>(value);
+  assertSystem(value.index() == (int)DBType::int64, "Unsupported type!"); // only supporting int64 for now
+  auto& raw_value = std::get<(int)DBType::int64>(value);
   std::memcpy((void *)storage, (void *)&raw_value, sizeof(INT64_type)); // todo get the actual type
 }
 
@@ -65,11 +65,6 @@ meta_int read_meta_int (std::fstream & file) {
   return value;
 }
 
-
-size_t RowSerializer::storage_size() {
-  return types.size() * sizeof(INT64_type); // for now todo
-}
-
 RowSerializer::RowSerializer(std::vector<DBType> types) : types {types} {
   // assertSystem(types.size() != 0, "Empty row!");
 }
@@ -77,7 +72,7 @@ RowSerializer::RowSerializer(std::vector<DBType> types) : types {types} {
 void RowSerializer::read_packed_row(std::fstream &file, char storage[]) {
   char* curr = storage;
   for (auto& t : types) {
-    assertUser(t == INT64, "Unsupported type in table");
+    assertUser(t == DBType::int64, "Unsupported type in table");
     file.read(curr, sizeof(INT64_type));
     curr += sizeof(INT64_type);
   }
@@ -86,7 +81,7 @@ void RowSerializer::print_packed_row(char storage[]) {
   char* curr = storage;
   std::cout << "|";
   for (auto& t : types) {
-    assertUser(t == INT64, "Unsupported type in table");
+    assertUser(t == DBType::int64, "Unsupported type in table");
     INT64_type value;
     std::memcpy((void*)&value, curr, sizeof(INT64_type));
     std::cout << std::setw(9) << std::to_string(value) << "|";
@@ -97,16 +92,61 @@ void RowSerializer::print_packed_row(char storage[]) {
 void RowSerializer::print_row(std::fstream &file) {
   std::cout << "|";
   for (auto& t : types) {
-    assertUser(t == INT64, "Unsupported type in table");
-    char buff[sizeof(INT64_type)];
-    file.read(buff, sizeof(INT64_type));
-    std::cout << std::setw(9) << std::to_string(*(INT64_type*)buff) << "|";
+    if(t == DBType::int64) {
+      char buff[sizeof(INT64_type)];
+      file.read(buff, sizeof(INT64_type));
+      std::cout << std::setw(9) << std::to_string(*(INT64_type*)buff) << "|";
+    } else if (t == DBType::string) {
+      meta_int size = read_meta_int(file);
+      char buff[size + 1];
+      file.read(buff, size);
+      buff[size] = '\0';
+      std::cout << std::setw(9) << buff << "|";
+    } else if (t == DBType::table_id) {
+      char buff[sizeof(table_id)];
+      file.read(buff, sizeof(table_id));
+      std::cout << std::setw(9) << std::to_string(*(table_id*)buff) << "|";
+    } else {
+      throw UserError("Unsupported type in table");
+    }
   }
 }
 
 void RowSerializer::write_row(std::fstream &file, std::vector<std::string> literals) {
-  for (auto& t : literals) {
-    INT64_type value = atoll(t.c_str());
-    file.write((char*)&value, sizeof(INT64_type));
+  assertUser(literals.size() == types.size(), "Invalid number of values");
+  for (int i = 0; i < types.size(); i++) {
+    if(types[i] == DBType::int64) {
+      INT64_type value = atoll(literals[i].c_str());
+      file.write((char*)&value, sizeof(INT64_type));
+    } else if (types[i] == DBType::string) {
+      meta_int size = literals[i].size();
+      write_meta_int(file, size);
+      file.write(literals[i].c_str(), size);
+    } else if (types[i] == DBType::table_id) {
+      table_id value = atoll(literals[i].c_str());
+      file.write((char*)&value, sizeof(table_id));
+    } else {
+      throw UserError("Unsupported type in table");
+    }
+  }
+}
+
+void RowSerializer::write_row(std::fstream &file, std::vector<DBValue> row) {
+  assertUser(row.size() == types.size(), "Invalid number of values");
+  for (int i = 0; i < types.size(); i++) {
+    if(types[i] == DBType::int64) {
+      INT64_type value = std::get<(int)DBType::int64>(row[i]);
+      file.write((char*)&value, sizeof(INT64_type));
+    } else if (types[i] == DBType::string) {
+      auto str = std::get<(int)DBType::string>(row[i]);
+      meta_int size = str.size();
+      write_meta_int(file, size);
+      file.write(str.c_str(), size);
+    } else if (types[i] == DBType::table_id) {
+      table_id value = std::get<(int)DBType::table_id>(row[i]);
+      file.write((char*)&value, sizeof(table_id));
+    } else {
+      throw UserError("Unsupported type in table");
+    }
   }
 }

@@ -23,8 +23,10 @@ class DB {
   void execute(SelectQuery q);
   table_id get_unique_id();
   void set_silent(bool);
+  ~DB();
 
  private:
+  Table* names_table;
   Table& load_table(std::string name);
   bool silent;
   int64_t unique_id_counter;

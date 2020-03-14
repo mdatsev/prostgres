@@ -19,6 +19,11 @@ void Table::insert(InsertQuery q) {
   row_serializer.write_row(data_file, q.values);
 }
 
+void Table::insert(std::vector<DBValue> row) {
+  data_file.seekg(0, std::ios::end);
+  row_serializer.write_row(data_file, row);
+}
+
 Table::Table(table_id id, const std::string& name, const std::vector<Field>& fields, DB& db) : id{id}, db{db}  {
   load_paths();
   create(name, fields);
@@ -56,6 +61,9 @@ void Table::create(std::string const &name, std::vector<Field> const &fields) {
   meta_file.flush();
   std::vector<DBType> types;
   std::transform(begin(fields), end(fields), std::back_inserter(types), [](auto &&f) { return f.type; });
+  for (auto t : types) {
+    write_meta_int(meta_file, (int) t);
+  }
   row_serializer = RowSerializer(types);
 }
 
@@ -68,7 +76,7 @@ void Table::load(table_id id) {
   nfields = read_meta_int(meta_file);
   std::vector<DBType> types;
   for (int i = 0; i < nfields; i++) {
-    types.push_back(INT64);  // for now, todo get real types
+    types.push_back((DBType)read_meta_int(meta_file));
   }
   row_serializer = RowSerializer(types);
 }
@@ -79,9 +87,8 @@ void Table::select(SelectQuery q) {
   int length = data_file.tellg();
   data_file.seekg(0, data_file.beg);
   // char arr[row_serializer.storage_size()];
-  int row_size = row_serializer.storage_size();
   for (int i = 0; data_file.tellg() < length; i++) {
-    row_serializer.print_row(data_file); // i * rowsize;
+    row_serializer.print_row(data_file);
     std::cout << '\n';
   }
 }
