@@ -3,15 +3,15 @@
 #include <variant>
 #include <filesystem>
 #include <fstream>
+#include <stdlib.h>
+#include "lib/Index.h"
 
 int main() {
-  auto mode = std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary;
-  auto data_path = std::filesystem::path("./test");
-  std::fstream data_file;
-  data_file.open(data_path, mode);
-  data_file.seekg(0, std::ios::end);
-  char value[4]{};
-  data_file.write(value, 4);
-  data_file.seekg(0, std::ios::end);
-  std::cout << data_file.tellg();
+  INT64Index index;
+
+  for (int i = 0; i < 100; i++) {
+    int r = rand() % 100;
+    index.insert(r, r);
+  }
+  index.root->print();
 }
