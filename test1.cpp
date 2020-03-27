@@ -24,6 +24,9 @@ int main() {
       key = rkey;
       value = rvalue;
     }
+    if (i % 100000 == 0) {
+      std::cout << i << "\n";
+    } 
   }
   auto t2 = std::chrono::high_resolution_clock::now();
 
@@ -33,7 +36,7 @@ int main() {
   auto duration = (t2 - t1);
   auto per_record = (t2 - t1) / (float) num_records;
   std::cout << 
-    "insertion: " << std::chrono::duration_cast<std::chrono::microseconds>( duration ).count() << "micro seconds (" <<
-    << std::chrono::duration_cast<std::chrono::microseconds>( per_record ).count() << " per record)" <<
+    "insertion: " << std::chrono::duration_cast<std::chrono::seconds>( duration ).count() << "seconds (" <<
+    std::chrono::duration_cast<std::chrono::microseconds>( per_record ).count() << "micros per record)" <<
     "\nsearch: " << std::chrono::duration_cast<std::chrono::microseconds>( t3 - t2 ).count() << "micro seconds";
 }
