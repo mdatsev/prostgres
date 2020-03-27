@@ -29,8 +29,6 @@ DB::~DB() {
   delete names_table;
 }
 
-Index<2, INT64_type> test_index;
-
 void DB::execute(CreateQuery q) {
   if (!silent) {
     std::cout << "created table " << q.table_name << "(";
