@@ -12,6 +12,13 @@ file(GLOB lib_SRC
 
 add_executable(prostgres main.cpp ${lib_SRC})
 
-set_target_properties(prostgres PROPERTIES CXX_STANDARD 17)
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
 
 target_link_libraries(${PROJECT_NAME} stdc++fs)
+
+
+
+
+add_executable(test1 test1.cpp ${lib_SRC})
+set_target_properties(test1 PROPERTIES CXX_STANDARD 17)
+target_link_libraries(test1 stdc++fs)

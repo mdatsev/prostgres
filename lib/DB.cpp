@@ -7,7 +7,6 @@
 #include "Table.h"
 #include "errors.h"
 #include "serialize.h"
-#include "Index.h"
 
 const table_id table_names_db_id = 0;
 const table_id user_db_start_id = 1;

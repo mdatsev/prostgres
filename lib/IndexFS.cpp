@@ -95,7 +95,30 @@ INT64Index::INT64Index(std::fstream& file) : file{file} {
   root = MemNode(file, true).fnode;
 }
 
-Node INT64Index::search_node(Key key, Node node) {return{};}
+Node INT64Index::search_node(Key key, Node fnode) {
+  if (fnode == -1) {
+    fnode = root;
+  }
+  MemNode node(file, fnode);
+  std::optional<Pair> to_insert;
+  if (!node.is_leaf) { // intermediary node - search in children
+    for (int i = 1; i < node.size; i++) { // search child
+      Pair& knp = node.block[i];
+      if (key < knp.key) {
+        return search_node(key, node.block[i - 1].node);
+      } else if (i == node.size - 1) {
+        return search_node(key, node.block[i].node);
+      }
+    }
+  }
+  // search for record
+  for (int i = 0; i < node.size; i++) {
+    if (node.block[i].key == key) {
+      return node.block[i].node;
+    }
+  }
+  return -1; // not found
+}
 
 std::optional<Pair> INT64Index::insert(Key key, int offset, Node fnode) {
   if (fnode == -1) {

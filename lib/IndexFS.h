@@ -36,7 +36,7 @@ class INT64Index {
  public:
   INT64Index(std::fstream &file);
 
-  Node search_node(Key key, Node node);
+  Node search_node(Key key, Node node = -1);
 
   std::optional<Pair> insert(Key key, int offset, Node node = -1);
   

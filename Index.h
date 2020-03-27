@@ -4,7 +4,7 @@
 #include "DBTypes.h"
 
 using Key = INT64_type;
-constexpr int capacity = 4;
+constexpr int capacity = 4000;
 constexpr Key MIN_KEY = std::numeric_limits<Key>::min();
 
 class Node;

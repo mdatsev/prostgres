@@ -51,4 +51,7 @@ db
 benchmark*.sql
 callgrind.out.*
 perf-graph.svg
+
+#exes
 prostgres
+test1
