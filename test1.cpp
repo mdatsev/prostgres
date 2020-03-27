@@ -4,14 +4,14 @@
 #include <filesystem>
 #include <fstream>
 #include <stdlib.h>
-#include "lib/IndexFS.h"
+#include "lib/Index.h"
 
 int main() {
-  std::fstream f("testfile", std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary);
-  INT64Index index(f);
+  INT64Index index;
+
   for (int i = 0; i < 100; i++) {
     int r = rand() % 100;
     index.insert(r, r);
   }
-  print_tree(f, index.root);
+  index.root->print();
 }

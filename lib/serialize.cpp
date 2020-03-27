@@ -7,6 +7,7 @@
 #include "serialize.h"
 #include "DBTypes.h"
 #include "errors.h"
+#include "IndexFS.h"
 
 void serialize_table_id(table_id *value, char(storage)[])
 {
@@ -51,6 +52,14 @@ void write_meta_int (std::fstream & file, meta_int value) {
   char storage[sizeof(value)];
   serialize_meta_int(value, storage);
   file.write(storage, sizeof(value));
+}
+
+void write_any(std::fstream& file, const void* data, int size) {
+  file.write((char*)data, size);
+}
+
+void read_any(std::fstream& file, void* data, int size) {
+  file.read((char*)data, size);
 }
 
 void deserialize_meta_int(meta_int& value, char(storage)[]) {
@@ -149,4 +158,11 @@ void RowSerializer::write_row(std::fstream &file, std::vector<DBValue> row) {
       throw UserError("Unsupported type in table");
     }
   }
+}
+
+void write_Node(std::fstream& file, const MemNode& node) {
+  file.write((char*)&node, sizeof(MemNode));
+}
+void read_Node(std::fstream& file, MemNode& node) {
+  file.read((char*)&node, sizeof(MemNode));
 }

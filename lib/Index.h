@@ -34,7 +34,7 @@ struct Node {
   Node* next;
   void insert(Pair pair);
   Key get_key(int index);
-  void print(int level);
+  void print(int level = 0);
 };
 
 

@@ -1,7 +1,8 @@
 #pragma once
+#include <vector>
 
 #include "DBTypes.h"
-
+#include "IndexFS.h"
 void serialize_DBValue(DBValue* value, char(storage)[]);
 
 void serialize_table_id(table_id* value, char(storage)[]);
@@ -17,6 +18,8 @@ void write_meta_int(std::fstream& file, meta_int value);
 void deserialize_meta_int(meta_int& value, char(storage)[]);
 meta_int read_meta_int(std::fstream& file);
 
+void write_any(std::fstream& file, const void* data, int size);
+void read_any(std::fstream& file, void* data, int size);
 class RowSerializer {
   std::vector<DBType> types;
  public:
@@ -27,3 +30,6 @@ class RowSerializer {
   void write_row(std::fstream &file, std::vector<std::string> literals);
   void write_row(std::fstream &file, std::vector<DBValue> row);
 };
+
+void write_Node(std::fstream& file, const MemNode& node);
+void read_Node(std::fstream& file, MemNode& node);

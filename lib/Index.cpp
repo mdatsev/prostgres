@@ -7,23 +7,6 @@
 #include "DBTypes.h"
 #include "errors.h"
 
-class Node;
-
-struct KeyNodePair {
-  Key key;
-  Node* pointer;
-};
-
-struct KeyRecordPair {
-  Key key;
-  int offset;
-};
-
-union Pair {
-  KeyNodePair keynode;
-  KeyRecordPair keyrecord;
-};
-
 Key get_key(Pair pair, bool is_leaf) {
   return is_leaf ? pair.keyrecord.key : pair.keynode.key;
 }
@@ -50,7 +33,7 @@ void Node::insert(Pair pair) {
 Key Node::get_key(int index) {
   return is_leaf ? block[index].keyrecord.key : block[index].keynode.key;
 }
-void Node::print(int level = 0) {
+void Node::print(int level) {
   if (is_leaf) {
     std::cout << "[";
     for (int i = 0; i < capacity; i++) {
@@ -117,7 +100,7 @@ Node* INT64Index::search_node(Key key, Node* node = nullptr) {
   return search_node(key, node->block[node->size - 1].keynode.pointer);
 }
 
-std::optional<Pair> INT64Index::insert(Key key, int offset, Node* node = nullptr) {
+std::optional<Pair> INT64Index::insert(Key key, int offset, Node* node) {
   if (node == nullptr) {
     node = root;
   }

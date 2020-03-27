@@ -38,8 +38,6 @@ void Table::load_paths() {
   auto table_dir = db.tables_dir / std::to_string(id);
   fs::create_directory(table_dir);
 
-  auto mode = std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary;
-
   meta_path = table_dir / "meta";
 
   data_path = table_dir / "data";
