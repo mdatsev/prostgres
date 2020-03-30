@@ -34,7 +34,10 @@ class INT64Index {
   Node root;
   std::fstream& file;
  public:
-  INT64Index(std::fstream &file);
+  INT64Index(std::fstream &file, bool create);
+
+  void read_root_ref();
+  void write_root_ref();
 
   Node search_node(Key key, Node node = -1);
 

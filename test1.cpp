@@ -5,33 +5,37 @@
 #include <fstream>
 #include <chrono>
 #include <stdlib.h>
-#include "lib/IndexFS.h"
+#include "lib/Index.h"
 #include "lib/errors.h"
 
 int main() {
-  auto t1 = std::chrono::high_resolution_clock::now();
-  std::fstream f("/tmp/testfile", std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary);
-  INT64Index index(f);
-
-  int num_records = 50000000;
-  int random_record_idx = rand() % num_records;
+  int num_records = 1000000;
   int key, value;
-  for (int i = 0; i < num_records; i++) {
-    int rkey = rand();
-    int rvalue = rand();
-    index.insert(rkey, rvalue);
-    if (i == random_record_idx) {
-      key = rkey;
-      value = rvalue;
+  auto t1 = std::chrono::high_resolution_clock::now();
+  {
+    std::fstream f("/tmp/testfile", std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary);
+    INT64Index index(f, true);
+
+    int random_record_idx = rand() % num_records;
+    for (int i = 0; i < num_records; i++) {
+      int rkey = rand();
+      int rvalue = rand();
+      index.insert(rkey, rvalue);
+      if (i == random_record_idx) {
+        key = rkey;
+        value = rvalue;
+      }
+      if (i % 100000 == 0) {
+        std::cout << i << "\n";
+      } 
     }
-    if (i % 100000 == 0) {
-      std::cout << i << "\n";
-    } 
   }
   auto t2 = std::chrono::high_resolution_clock::now();
-
-  assertSystem(index.search_node(key) == value, "Error!");
-
+  {
+    std::fstream f("/tmp/testfile", std::ios::in | std::ios::out | std::ios::binary);
+    INT64Index index(f, false);
+    assertSystem(index.search_node(key) == value, "Error!");
+  }
   auto t3 = std::chrono::high_resolution_clock::now();
   auto duration = (t2 - t1);
   auto per_record = (t2 - t1) / (float) num_records;

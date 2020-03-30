@@ -7,7 +7,7 @@
 #include "serialize.h"
 #include "DBTypes.h"
 #include "errors.h"
-#include "IndexFS.h"
+#include "Index.h"
 
 void serialize_table_id(table_id *value, char(storage)[])
 {

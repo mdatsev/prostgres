@@ -2,7 +2,7 @@
 #include <vector>
 
 #include "DBTypes.h"
-#include "IndexFS.h"
+#include "Index.h"
 void serialize_DBValue(DBValue* value, char(storage)[]);
 
 void serialize_table_id(table_id* value, char(storage)[]);

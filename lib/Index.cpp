@@ -1,4 +1,4 @@
-#include "IndexFS.h"
+#include "Index.h"
 
 #include <optional>
 #include <iostream>
@@ -91,8 +91,24 @@ void print_tree(std::fstream& file, Node fnode, int level) {
   std::cout << std::endl;
 }
 
-INT64Index::INT64Index(std::fstream& file) : file{file} {
-  root = MemNode(file, true).fnode;
+INT64Index::INT64Index(std::fstream& file, bool create) : file{file} {
+  if (create) {
+    write_root_ref();
+    root = MemNode(file, true).fnode;
+    write_root_ref();
+  } else {
+    read_root_ref();
+  }
+}
+
+void INT64Index::write_root_ref() {
+  file.seekp(0, std::ios::beg);
+  write_any(file, &root, sizeof(root));
+}
+
+void INT64Index::read_root_ref() {
+  file.seekg(0, std::ios::beg);
+  read_any(file, &root, sizeof(root));
 }
 
 Node INT64Index::search_node(Key key, Node fnode) {
@@ -172,6 +188,7 @@ std::optional<Pair> INT64Index::insert(Key key, int offset, Node fnode) {
     new_root.insert(file, Pair{new_node.block[0].key, new_node.fnode});
     new_root.insert(file, Pair{MIN_KEY, node.fnode});
     root = new_root.fnode;
+    write_root_ref();
     new_root.sync_with_fs(file);
     return {};
   }
