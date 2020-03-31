@@ -27,7 +27,7 @@ int main() {
       }
       if (i % 100000 == 0) {
         std::cout << i << "\n";
-      } 
+      }
     }
   }
   auto t2 = std::chrono::high_resolution_clock::now();

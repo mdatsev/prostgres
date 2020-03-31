@@ -26,10 +26,12 @@ class RowSerializer {
   RowSerializer(std::vector<DBType> types = {});
   void read_packed_row(std::fstream &file, char storage[]);
   void print_packed_row(char storage[]);
-  void print_row(std::fstream &file);
+  void print_row(std::fstream &file, std::vector<int> = {});
   void write_row(std::fstream &file, std::vector<std::string> literals);
   void write_row(std::fstream &file, std::vector<DBValue> row);
+  std::vector<DBValue> read_row(std::fstream &file);
 };
-
+std::string read_string(std::fstream& file);
+void write_string(std::fstream& file, const std::string& s);
 void write_Node(std::fstream& file, const MemNode& node);
 void read_Node(std::fstream& file, MemNode& node);

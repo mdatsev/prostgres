@@ -63,6 +63,10 @@ void Table::create(std::string const &name, std::vector<Field> const &fields) {
     write_meta_int(meta_file, (int) t);
   }
   row_serializer = RowSerializer(types);
+  for (int i = 0; i < fields.size(); i++) {
+    write_string(meta_file, fields[i].name);
+    column_names[fields[i].name] = i;
+  }
 }
 
 void Table::load(table_id id) {
@@ -77,6 +81,9 @@ void Table::load(table_id id) {
     types.push_back((DBType)read_meta_int(meta_file));
   }
   row_serializer = RowSerializer(types);
+    for (int i = 0; i < nfields; i++) {
+    column_names[read_string(meta_file)] = i;
+  }
 }
 
 void Table::select(SelectQuery q) {
@@ -85,8 +92,24 @@ void Table::select(SelectQuery q) {
   int length = data_file.tellg();
   data_file.seekg(0, data_file.beg);
   // char arr[row_serializer.storage_size()];
+  std::vector<int> col_indices;
+  std::transform(begin(q.fields), end(q.fields), std::back_inserter(col_indices), [&](auto &&f) { return column_names[f]; });
   for (int i = 0; data_file.tellg() < length; i++) {
-    row_serializer.print_row(data_file);
+    row_serializer.print_row(data_file, col_indices);
     std::cout << '\n';
   }
+}
+
+std::vector<std::vector<DBValue>> Table::select() {
+  std::vector<std::vector<DBValue>> result;
+  // int curr = data_file.tellg();
+  data_file.seekg(0, data_file.end);
+  int length = data_file.tellg();
+  data_file.seekg(0, data_file.beg);
+  // char arr[row_serializer.storage_size()];
+  for (int i = 0; data_file.tellg() < length; i++) {
+    result.push_back(row_serializer.read_row(data_file));
+    std::cout << '\n';
+  }
+  return result;
 }

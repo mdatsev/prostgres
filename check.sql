@@ -1,4 +1,10 @@
-create table test (a int, b string, c int);
-insert into _last (a, b, c) values (123, 'test', 789);
-insert into _last (a, b, c) values (10, 'testing', 12);
-select a, b, c from _last;
+create table test1 (a int, b string, c int);
+insert into test1 (a, b, c) values (1, 'test11', 2);
+insert into test1 (a, b, c) values (3, 'test12', 4);
+create table test2 (a int, b string, c int);
+insert into test2 (a, b, c) values (5, 'test21', 6);
+insert into test2 (a, b, c) values (7, 'test22', 8);
+select a, b, c from test1;
+select a, b, c from test2;
+select a, c from test1;
+select b from test2;

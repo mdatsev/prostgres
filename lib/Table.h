@@ -15,10 +15,11 @@ class Table {
   void insert(InsertQuery q);
   void insert(std::vector<DBValue> row);
   void select(SelectQuery q);
-  std::vector<DBValue> select();
+  std::vector<std::vector<DBValue>> select();
   int32_t nfields;
 
  private:
+  std::unordered_map<std::string, int> column_names;
   void load_paths();
   RowSerializer row_serializer;
   fs::path data_path;

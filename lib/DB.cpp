@@ -2,6 +2,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 
 #include "DB.h"
 #include "Table.h"
@@ -18,6 +19,10 @@ DB::DB(fs::path base_dir)
     unique_id_counter = user_db_start_id;
     save_global_metadata();
     names_table = new Table(table_names_db_id, std::string{"db_table_names"}, std::vector<Field>{{DBType::table_id, "id"}, {DBType::string, "name"}}, *this);
+    auto rows = names_table->select();
+    for (auto& row : rows) {
+      table_names_map[std::get<(int)DBType::string>(row[0])] = std::get<(int)DBType::table_id>(row[1]);
+    }
   } else {
     load_global_metadata();
     names_table = new Table(table_names_db_id, *this);
@@ -42,6 +47,7 @@ void DB::execute(CreateQuery q) {
                         std::forward_as_tuple(id), 
                         std::forward_as_tuple(id, q.table_name, q.fields, *this));
   names_table->insert({DBValue(std::in_place_index<(int)DBType::table_id>, id), DBValue(q.table_name)});
+  table_names_map[q.table_name] = id;
 }
 void DB::execute(InsertQuery q) {
   if (!silent) {
@@ -127,7 +133,12 @@ table_id DB::get_table_id(std::string name) {
   if (name == "_last") {
     return unique_id_counter;
   }
-  return atoi(name.c_str() + 1);
+  if (name[0] == '_') {
+    return atoi(name.c_str() + 1);
+  }
+  auto iter = table_names_map.find(name);
+  assertUser(iter != table_names_map.end(), "No such table");
+  return (*iter).second;
 }
 
 void DB::set_silent(bool val) {

@@ -27,6 +27,7 @@ class DB {
 
  private:
   Table* names_table;
+  std::unordered_map<std::string, table_id> table_names_map;
   Table& load_table(std::string name);
   bool silent;
   int64_t unique_id_counter;

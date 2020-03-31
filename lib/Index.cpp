@@ -198,5 +198,5 @@ std::optional<Pair> INT64Index::insert(Key key, int offset, Node fnode) {
 }
 
 INT64Index::~INT64Index() {
-  
+
 }

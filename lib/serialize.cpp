@@ -2,6 +2,7 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
+#include <algorithm>
 #include <iomanip>
 
 #include "serialize.h"
@@ -98,22 +99,40 @@ void RowSerializer::print_packed_row(char storage[]) {
   }
 }
 
-void RowSerializer::print_row(std::fstream &file) {
+std::string read_string(std::fstream& file) {
+  meta_int size = read_meta_int(file);
+  std::string s;
+  s.reserve(size);
+  file.read(&s[0], size);
+  return s;
+}
+void write_string(std::fstream& file, const std::string& s) {
+  meta_int size = s.size();
+  write_meta_int(file, size);
+  file.write(s.c_str(), size);
+}
+
+void RowSerializer::print_row(std::fstream &file, std::vector<int> ics) {
   std::cout << "|";
-  for (auto& t : types) {
+  for (int i = 0; i < types.size(); i++) {
+    bool skip = ics.size() != 0 && std::find(ics.begin(), ics.end(), i) == ics.end();
+    auto&& t = types[i];
     if(t == DBType::int64) {
       char buff[sizeof(INT64_type)];
       file.read(buff, sizeof(INT64_type));
+      if(skip)continue;
       std::cout << std::setw(9) << std::to_string(*(INT64_type*)buff) << "|";
     } else if (t == DBType::string) {
       meta_int size = read_meta_int(file);
       char buff[size + 1];
       file.read(buff, size);
       buff[size] = '\0';
+      if(skip)continue;
       std::cout << std::setw(9) << buff << "|";
     } else if (t == DBType::table_id) {
       char buff[sizeof(table_id)];
       file.read(buff, sizeof(table_id));
+      if(skip)continue;
       std::cout << std::setw(9) << std::to_string(*(table_id*)buff) << "|";
     } else {
       throw UserError("Unsupported type in table");
@@ -160,6 +179,28 @@ void RowSerializer::write_row(std::fstream &file, std::vector<DBValue> row) {
   }
 }
 
+std::vector<DBValue> RowSerializer::read_row(std::fstream &file) {
+  std::vector<DBValue> result;
+  for (int i = 0; i < types.size(); i++) {
+    if(types[i] == DBType::int64) {
+      INT64_type value;
+      file.read((char*)&value, sizeof(INT64_type));
+      result.push_back(DBValue(std::in_place_index<(int)DBType::int64>, value));
+    } else if (types[i] == DBType::string) {
+      meta_int size = read_meta_int(file);
+      std::string s;
+      s.reserve(size);
+      file.read(&s[0], size);
+      result.push_back(s);
+    } else if (types[i] == DBType::table_id) {
+      table_id value;
+      file.read((char*)&value, sizeof(meta_int));
+      result.push_back(DBValue(std::in_place_index<(int)DBType::table_id>, value));
+    } else {
+      throw UserError("Unsupported type in table");
+    }
+  }
+}
 void write_Node(std::fstream& file, const MemNode& node) {
   file.write((char*)&node, sizeof(MemNode));
 }
