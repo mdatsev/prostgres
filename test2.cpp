@@ -7,11 +7,10 @@
 #include "lib/Index.h"
 
 int main() {
-  std::fstream f("testfile", std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary);
-  INT64Index index(f, true);
+  INT64Index index("/tmp/testfile", true);
   for (int i = 0; i < 100; i++) {
     int r = rand() % 100;
     index.insert(r, r);
   }
-  print_tree(f, index.root);
+  print_tree(index.file, index.root);
 }

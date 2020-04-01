@@ -19,6 +19,7 @@ class Table {
   int32_t nfields;
 
  private:
+  std::vector<INT64Index> indexes;
   std::unordered_map<std::string, int> column_names;
   void load_paths();
   RowSerializer row_serializer;
@@ -26,6 +27,8 @@ class Table {
   fs::path page_map_path;
   fs::path toast_path;
   fs::path meta_path;
+  fs::path table_dir;
+  fs::path indexes_dir;
   std::fstream meta_file;
   std::fstream data_file;
   std::fstream page_map_file;

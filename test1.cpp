@@ -9,12 +9,11 @@
 #include "lib/errors.h"
 
 int main() {
-  int num_records = 1000000;
+  int num_records = 10000;
   int key, value;
   auto t1 = std::chrono::high_resolution_clock::now();
   {
-    std::fstream f("/tmp/testfile", std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary);
-    INT64Index index(f, true);
+    INT64Index index("/tmp/testfile", true);
 
     int random_record_idx = rand() % num_records;
     for (int i = 0; i < num_records; i++) {
@@ -32,8 +31,7 @@ int main() {
   }
   auto t2 = std::chrono::high_resolution_clock::now();
   {
-    std::fstream f("/tmp/testfile", std::ios::in | std::ios::out | std::ios::binary);
-    INT64Index index(f, false);
+    INT64Index index("/tmp/testfile", false);
     assertSystem(index.search_node(key) == value, "Error!");
   }
   auto t3 = std::chrono::high_resolution_clock::now();

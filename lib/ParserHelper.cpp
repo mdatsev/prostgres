@@ -68,18 +68,24 @@ std::string ParserHelper::get_word() {
   return input.substr(start, end - start);
 }
 std::string ParserHelper::get_token() {
+  int start = -1;
   for (auto i = curr_pos; i < input.size() && !is_delim(input[i]); i++) {
     if (is_token_char(input[i])) {
       curr_pos = i + 1;
-      return input.substr(i, 1);
+      if (start == -1) {
+        start = i;
+      }
     } else if (is_whitespace(input[i])) {
-      continue;
+      if (start != -1)
+        break;
     } else {
       break;
     }
   }
-  // fail to find
-  return {};
+  if (start == -1) {
+    return {};
+  }
+  return input.substr(start, curr_pos - start);
 }
 std::string ParserHelper::get_literal() {
   std::size_t start = std::string::npos;

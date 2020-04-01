@@ -16,12 +16,12 @@ long GetFileSize(std::string filename) {
 
 void Table::insert(InsertQuery q) {
   data_file.seekg(0, std::ios::end);
-  row_serializer.write_row(data_file, q.values);
+  row_serializer.write_row(data_file, q.values, indexes);
 }
 
 void Table::insert(std::vector<DBValue> row) {
   data_file.seekg(0, std::ios::end);
-  row_serializer.write_row(data_file, row);
+  row_serializer.write_row(data_file, row, indexes);
 }
 
 Table::Table(table_id id, const std::string& name, const std::vector<Field>& fields, DB& db) : id{id}, db{db}  {
@@ -35,7 +35,7 @@ Table::Table(table_id id, DB const& db) : id{id}, db{db} {
 }
 
 void Table::load_paths() {
-  auto table_dir = db.tables_dir / std::to_string(id);
+  table_dir = db.tables_dir / std::to_string(id);
   fs::create_directory(table_dir);
 
   meta_path = table_dir / "meta";
@@ -45,6 +45,7 @@ void Table::load_paths() {
   page_map_path = table_dir / "page_map";
 
   toast_path = table_dir / "toast";
+  indexes_dir = table_dir / "indexes";
 }
 
 void Table::create(std::string const &name, std::vector<Field> const &fields) {
@@ -63,9 +64,11 @@ void Table::create(std::string const &name, std::vector<Field> const &fields) {
     write_meta_int(meta_file, (int) t);
   }
   row_serializer = RowSerializer(types);
+  fs::create_directory(indexes_dir);
   for (int i = 0; i < fields.size(); i++) {
     write_string(meta_file, fields[i].name);
     column_names[fields[i].name] = i;
+    indexes.emplace_back(indexes_dir / std::to_string(i), true);
   }
 }
 
@@ -83,20 +86,50 @@ void Table::load(table_id id) {
   row_serializer = RowSerializer(types);
     for (int i = 0; i < nfields; i++) {
     column_names[read_string(meta_file)] = i;
+    indexes.emplace_back(indexes_dir / std::to_string(i), false);
   }
 }
 
 void Table::select(SelectQuery q) {
-  // int curr = data_file.tellg();
-  data_file.seekg(0, data_file.end);
-  int length = data_file.tellg();
-  data_file.seekg(0, data_file.beg);
-  // char arr[row_serializer.storage_size()];
   std::vector<int> col_indices;
   std::transform(begin(q.fields), end(q.fields), std::back_inserter(col_indices), [&](auto &&f) { return column_names[f]; });
-  for (int i = 0; data_file.tellg() < length; i++) {
-    row_serializer.print_row(data_file, col_indices);
-    std::cout << '\n';
+  if (q.conditional && q.condition.op == Op::eq) { // todo others
+    int col_pos = column_names[q.table_name];
+    auto&& ind = indexes[col_pos];
+    auto key = atoll(q.condition.value.c_str());
+    auto fnode = ind.search_node(key);
+    bool started_seq = false;
+    while(fnode != NODE_END) {
+      MemNode node(ind.file, fnode);
+      for (int i = 0; i < node.size; i++) {
+        data_file.seekg(node.block[i].node, data_file.beg);
+        auto row = row_serializer.read_row(data_file);
+        bool cond_met = apply_op(std::get<(int)DBType::int64>(row[col_pos]), q.condition.op, key);
+        if (cond_met) {
+          started_seq = true;
+        } else {
+          if (started_seq) {
+            break;
+          } else {
+            continue;
+          }
+        }
+        data_file.seekg(node.block[i].node, data_file.beg);
+        row_serializer.print_row(data_file, col_indices);
+        std::cout << '\n';
+      }
+      fnode = node.next;
+    }
+  } else {
+    // int curr = data_file.tellg();
+    data_file.seekg(0, data_file.end);
+    int length = data_file.tellg();
+    data_file.seekg(0, data_file.beg);
+    // char arr[row_serializer.storage_size()];
+    for (int i = 0; data_file.tellg() < length; i++) {
+      row_serializer.print_row(data_file, col_indices);
+      std::cout << '\n';
+    }
   }
 }
 

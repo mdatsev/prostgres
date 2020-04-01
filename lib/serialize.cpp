@@ -140,12 +140,14 @@ void RowSerializer::print_row(std::fstream &file, std::vector<int> ics) {
   }
 }
 
-void RowSerializer::write_row(std::fstream &file, std::vector<std::string> literals) {
+void RowSerializer::write_row(std::fstream &file, std::vector<std::string> literals, std::vector<INT64Index>& indexes) {
   assertUser(literals.size() == types.size(), "Invalid number of values");
+  int offset = file.tellp();
   for (int i = 0; i < types.size(); i++) {
     if(types[i] == DBType::int64) {
       INT64_type value = atoll(literals[i].c_str());
       file.write((char*)&value, sizeof(INT64_type));
+      indexes[i].insert(value, offset);
     } else if (types[i] == DBType::string) {
       meta_int size = literals[i].size();
       write_meta_int(file, size);
@@ -159,12 +161,14 @@ void RowSerializer::write_row(std::fstream &file, std::vector<std::string> liter
   }
 }
 
-void RowSerializer::write_row(std::fstream &file, std::vector<DBValue> row) {
+void RowSerializer::write_row(std::fstream &file, std::vector<DBValue> row, std::vector<INT64Index>& indexes) {
   assertUser(row.size() == types.size(), "Invalid number of values");
+  int offset = file.tellp();
   for (int i = 0; i < types.size(); i++) {
     if(types[i] == DBType::int64) {
       INT64_type value = std::get<(int)DBType::int64>(row[i]);
       file.write((char*)&value, sizeof(INT64_type));
+      indexes[i].insert(value, offset);
     } else if (types[i] == DBType::string) {
       auto str = std::get<(int)DBType::string>(row[i]);
       meta_int size = str.size();
@@ -200,6 +204,7 @@ std::vector<DBValue> RowSerializer::read_row(std::fstream &file) {
       throw UserError("Unsupported type in table");
     }
   }
+  return result;
 }
 void write_Node(std::fstream& file, const MemNode& node) {
   file.write((char*)&node, sizeof(MemNode));

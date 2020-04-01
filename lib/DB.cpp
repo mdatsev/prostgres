@@ -99,7 +99,7 @@ void DB::execute(SelectQuery q) {
     }
     std::cout << "from " << q.table_name;
     if (q.conditional) {
-      std::cout << "where " << q.condition.column << (int)q.condition.op << q.condition.value << ";\n";
+      std::cout << "where " << q.condition.column << " " << (int)q.condition.op << " " << q.condition.value;
     }
     std::cout << ";\n";
   }

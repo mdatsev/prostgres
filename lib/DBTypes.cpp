@@ -37,7 +37,7 @@ Op parseOp(std::string str) {
   throw UserError("Invalid operator");
 }
 
-bool use_op(INT64_type lhs, Op op, INT64_type rhs) {
+bool apply_op(INT64_type lhs, Op op, INT64_type rhs) {
   if (op == Op::le) return lhs <= rhs;
   if (op == Op::ge) return lhs >= rhs;
   if (op == Op::lt) return lhs <  rhs;

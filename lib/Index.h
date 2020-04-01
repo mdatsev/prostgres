@@ -1,6 +1,10 @@
 #pragma once
 #include <optional>
 #include <numeric>
+#include <filesystem>
+#include <fstream>
+
+namespace fs = std::filesystem;
 
 #include "DBTypes.h"
 
@@ -8,6 +12,7 @@ using Key = INT64_type;
 using Node = meta_int;
 constexpr int capacity = 4;
 constexpr Key MIN_KEY = std::numeric_limits<Key>::min();
+constexpr Node NODE_END = -1;
 
 struct Pair {
   Key key;
@@ -16,7 +21,7 @@ struct Pair {
 
 void print_tabs(int n);
 struct MemNode {
-  MemNode(std::fstream& file, bool is_leaf); // create
+  MemNode(std::fstream& file, bool is_leaf, Node next); // create
   MemNode(std::fstream& file, Node fnode); // load
   void sync_with_fs(std::fstream& file); // load
   Node fnode;
@@ -32,16 +37,17 @@ struct MemNode {
 class INT64Index {
  public:
   Node root;
-  std::fstream& file;
+  std::fstream file;
  public:
-  INT64Index(std::fstream &file, bool create);
+  INT64Index(fs::path file, bool create);
+  INT64Index(INT64Index&&);
 
   void read_root_ref();
   void write_root_ref();
 
-  Node search_node(Key key, Node node = -1);
+  Node search_node(Key key, Node node = NODE_END);
 
-  std::optional<Pair> insert(Key key, int offset, Node node = -1);
+  std::optional<Pair> insert(Key key, int offset, Node node = NODE_END);
   
   ~INT64Index();
 };

@@ -27,8 +27,8 @@ class RowSerializer {
   void read_packed_row(std::fstream &file, char storage[]);
   void print_packed_row(char storage[]);
   void print_row(std::fstream &file, std::vector<int> = {});
-  void write_row(std::fstream &file, std::vector<std::string> literals);
-  void write_row(std::fstream &file, std::vector<DBValue> row);
+  void write_row(std::fstream &file, std::vector<std::string> literals, std::vector<INT64Index>& indexes);
+  void write_row(std::fstream &file, std::vector<DBValue> row, std::vector<INT64Index>& indexes);
   std::vector<DBValue> read_row(std::fstream &file);
 };
 std::string read_string(std::fstream& file);

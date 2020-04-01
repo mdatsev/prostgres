@@ -15,7 +15,7 @@ void print_tabs(int n) {
   }
 }
 
-MemNode::MemNode(std::fstream& file, bool is_leaf): is_leaf{is_leaf} { // create
+MemNode::MemNode(std::fstream& file, bool is_leaf, Node next): is_leaf{is_leaf}, next{next}, size{0} { // create
   file.seekp(0, std::ios::end);
   fnode = file.tellp();
   write_Node(file, *this);
@@ -60,6 +60,7 @@ void print_tree(std::fstream& file, Node fnode, int level) {
       }
     }
     std::cout << "]";
+    std::cout << "[>>" << node.next << "]";
   } else {
     std::cout << "(";
     for (int i = 0; i < capacity; i++) {
@@ -69,7 +70,7 @@ void print_tree(std::fstream& file, Node fnode, int level) {
         } else {
           std::cout << "";
         }
-        std::cout << i << ":";
+        std::cout << node.block[i].node << ":";
       } else {
         std::cout << "_|_";
       }
@@ -82,7 +83,7 @@ void print_tree(std::fstream& file, Node fnode, int level) {
     std::cout << "{\n";
     for (int i = 0; i < node.size; i++) {
       print_tabs(level + 1);
-      std::cout << i << ":";
+      std::cout << node.block[i].node << ":";
       print_tree(file, node.block[i].node, level + 2);
     }
     print_tabs(level);
@@ -91,14 +92,21 @@ void print_tree(std::fstream& file, Node fnode, int level) {
   std::cout << std::endl;
 }
 
-INT64Index::INT64Index(std::fstream& file, bool create) : file{file} {
+INT64Index::INT64Index(fs::path path, bool create) {
   if (create) {
+    file.open(path, std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary);
     write_root_ref();
-    root = MemNode(file, true).fnode;
+    root = MemNode(file, true, NODE_END).fnode;
     write_root_ref();
   } else {
+    file.open(path, std::ios::in | std::ios::out | std::ios::binary);
     read_root_ref();
   }
+}
+
+INT64Index::INT64Index(INT64Index&& old) {
+  file = std::move(old.file);
+  root = old.root;
 }
 
 void INT64Index::write_root_ref() {
@@ -112,7 +120,7 @@ void INT64Index::read_root_ref() {
 }
 
 Node INT64Index::search_node(Key key, Node fnode) {
-  if (fnode == -1) {
+  if (fnode == NODE_END) {
     fnode = root;
   }
   MemNode node(file, fnode);
@@ -127,17 +135,18 @@ Node INT64Index::search_node(Key key, Node fnode) {
       }
     }
   }
-  // search for record
-  for (int i = 0; i < node.size; i++) {
-    if (node.block[i].key == key) {
-      return node.block[i].node;
-    }
-  }
-  return -1; // not found
+  return node.fnode;
+  // // search for record
+  // for (int i = 0; i < node.size; i++) {
+  //   if (node.block[i].key == key) {
+  //     return node.block[i].node;
+  //   }
+  // }
+  // return NODE_END; // not found
 }
 
 std::optional<Pair> INT64Index::insert(Key key, int offset, Node fnode) {
-  if (fnode == -1) {
+  if (fnode == NODE_END) {
     fnode = root;
   }
   MemNode node(file, fnode);
@@ -166,7 +175,8 @@ std::optional<Pair> INT64Index::insert(Key key, int offset, Node fnode) {
   }
   // otherwise need to split
   int split_point = size / 2;
-  MemNode new_node = MemNode(file, node.is_leaf);
+  MemNode new_node = MemNode(file, node.is_leaf, node.next);
+  node.next = new_node.fnode;
   for (int i = split_point; i < size; i++) { // move half to new node
     new_node.block[i - split_point] = node.block[i];
   }
@@ -184,7 +194,7 @@ std::optional<Pair> INT64Index::insert(Key key, int offset, Node fnode) {
 
   // if root needs to split, make new root
   if (node.fnode == root) {
-    MemNode new_root(file, false);
+    MemNode new_root(file, false, NODE_END);
     new_root.insert(file, Pair{new_node.block[0].key, new_node.fnode});
     new_root.insert(file, Pair{MIN_KEY, node.fnode});
     root = new_root.fnode;

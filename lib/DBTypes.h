@@ -34,4 +34,4 @@ enum class Op {
   ne
 };
 Op parseOp(std::string str);
-bool use_op(INT64_type lhs, Op op, INT64_type rhs);
+bool apply_op(INT64_type lhs, Op op, INT64_type rhs);
