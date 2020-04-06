@@ -102,7 +102,7 @@ void RowSerializer::print_packed_row(char storage[]) {
 std::string read_string(std::fstream& file) {
   meta_int size = read_meta_int(file);
   std::string s;
-  s.reserve(size);
+  s.resize(size);
   file.read(&s[0], size);
   return s;
 }
@@ -193,7 +193,7 @@ std::vector<DBValue> RowSerializer::read_row(std::fstream &file) {
     } else if (types[i] == DBType::string) {
       meta_int size = read_meta_int(file);
       std::string s;
-      s.reserve(size);
+      s.resize(size);
       file.read(&s[0], size);
       result.push_back(s);
     } else if (types[i] == DBType::table_id) {

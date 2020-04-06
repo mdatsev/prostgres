@@ -18,19 +18,26 @@ DB::DB(fs::path base_dir)
     fs::create_directory(tables_dir);
     unique_id_counter = user_db_start_id;
     save_global_metadata();
-    names_table = new Table(table_names_db_id, std::string{"db_table_names"}, std::vector<Field>{{DBType::table_id, "id"}, {DBType::string, "name"}}, *this);
-    auto rows = names_table->select();
-    for (auto& row : rows) {
-      table_names_map[std::get<(int)DBType::string>(row[0])] = std::get<(int)DBType::table_id>(row[1]);
-    }
+    auto [iter, _]
+      = loaded_tables.emplace(std::piecewise_construct,
+                              std::forward_as_tuple(table_names_db_id),
+                              std::forward_as_tuple(table_names_db_id, std::string{"db_table_names"}, std::vector<Field>{{DBType::table_id, "id"}, {DBType::string, "name"}}, *this));
+    names_table = &(*iter).second;
   } else {
     load_global_metadata();
-    names_table = new Table(table_names_db_id, *this);
+    auto [iter, _]
+      = loaded_tables.emplace(std::piecewise_construct,
+                              std::forward_as_tuple(table_names_db_id),
+                              std::forward_as_tuple(table_names_db_id, *this));
+    names_table = &(*iter).second;
+    auto rows = names_table->select();
+    for (auto& row : rows) {
+      table_names_map[std::get<(int)DBType::string>(row[1])] = std::get<(int)DBType::table_id>(row[0]);
+    }
   };
 }
 
 DB::~DB() {
-  delete names_table;
 }
 
 void DB::execute(CreateQuery q) {
@@ -43,6 +50,7 @@ void DB::execute(CreateQuery q) {
               << std::endl;
   }
   table_id id = get_unique_id();
+  assertUser(loaded_tables.find(id) == loaded_tables.end(), "Table already exists");
   loaded_tables.emplace(std::piecewise_construct,
                         std::forward_as_tuple(id), 
                         std::forward_as_tuple(id, q.table_name, q.fields, *this));

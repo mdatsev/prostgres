@@ -119,7 +119,7 @@ void INT64Index::read_root_ref() {
   read_any(file, &root, sizeof(root));
 }
 
-Node INT64Index::search_node(Key key, Node fnode) {
+Node INT64Index::search_node(Key key, bool deep, Node fnode) {
   if (fnode == NODE_END) {
     fnode = root;
   }
@@ -129,20 +129,48 @@ Node INT64Index::search_node(Key key, Node fnode) {
     for (int i = 1; i < node.size; i++) { // search child
       Pair& knp = node.block[i];
       if (key < knp.key) {
-        return search_node(key, node.block[i - 1].node);
+        return search_node(key, deep, node.block[i - 1].node);
       } else if (i == node.size - 1) {
-        return search_node(key, node.block[i].node);
+        return search_node(key, deep, node.block[i].node);
       }
     }
   }
-  return node.fnode;
-  // // search for record
-  // for (int i = 0; i < node.size; i++) {
-  //   if (node.block[i].key == key) {
-  //     return node.block[i].node;
-  //   }
-  // }
-  // return NODE_END; // not found
+  if(!deep) {
+    return node.fnode;
+  }
+  // search for record
+  for (int i = 0; i < node.size; i++) {
+    if (node.block[i].key == key) {
+      return node.block[i].node;
+    }
+  }
+  return NODE_END; // not found
+}
+
+std::pair<Node, int> INT64Index::search_record(Key key, Node fnode) {
+    if (fnode == NODE_END) {
+    fnode = root;
+  }
+  MemNode node(file, fnode);
+  std::optional<Pair> to_insert;
+  if (!node.is_leaf) { // intermediary node - search in children
+    for (int i = 1; i < node.size; i++) { // search child
+      Pair& knp = node.block[i];
+      if (key < knp.key) {
+        return search_record(key, node.block[i - 1].node);
+      } else if (i == node.size - 1) {
+        return search_record(key, node.block[i].node);
+      }
+    }
+  }
+  Node found = node.fnode;
+  // search for record
+  for (int i = 0; i < node.size; i++) {
+    if (node.block[i].key >= key) {
+      return {found, i};
+    }
+  }
+  throw SystemError("This should never happen");
 }
 
 std::optional<Pair> INT64Index::insert(Key key, int offset, Node fnode) {

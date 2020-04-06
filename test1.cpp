@@ -9,7 +9,7 @@
 #include "lib/errors.h"
 
 int main() {
-  int num_records = 10000;
+  int num_records = 10000000;
   int key, value;
   auto t1 = std::chrono::high_resolution_clock::now();
   {
@@ -32,13 +32,13 @@ int main() {
   auto t2 = std::chrono::high_resolution_clock::now();
   {
     INT64Index index("/tmp/testfile", false);
-    assertSystem(index.search_node(key) == value, "Error!");
+    assertSystem(index.search_node(key, true) == value, "Error!");
   }
   auto t3 = std::chrono::high_resolution_clock::now();
   auto duration = (t2 - t1);
   auto per_record = (t2 - t1) / (float) num_records;
   std::cout << 
-    "insertion: " << std::chrono::duration_cast<std::chrono::seconds>( duration ).count() << "seconds (" <<
+    "insertion: " << std::chrono::duration_cast<std::chrono::milliseconds>( duration ).count() << "seconds (" <<
     std::chrono::duration_cast<std::chrono::microseconds>( per_record ).count() << "micros per record)" <<
-    "\nsearch: " << std::chrono::duration_cast<std::chrono::microseconds>( t3 - t2 ).count() << "micro seconds";
+    "\nsearch: " << std::chrono::duration_cast<std::chrono::microseconds>( t3 - t2 ).count() << "micro seconds\n";
 }

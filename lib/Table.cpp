@@ -84,7 +84,7 @@ void Table::load(table_id id) {
     types.push_back((DBType)read_meta_int(meta_file));
   }
   row_serializer = RowSerializer(types);
-    for (int i = 0; i < nfields; i++) {
+  for (int i = 0; i < nfields; i++) {
     column_names[read_string(meta_file)] = i;
     indexes.emplace_back(indexes_dir / std::to_string(i), false);
   }
@@ -93,32 +93,68 @@ void Table::load(table_id id) {
 void Table::select(SelectQuery q) {
   std::vector<int> col_indices;
   std::transform(begin(q.fields), end(q.fields), std::back_inserter(col_indices), [&](auto &&f) { return column_names[f]; });
-  if (q.conditional && q.condition.op == Op::eq) { // todo others
+  if (q.conditional) {
+    auto op = q.condition.op;
     int col_pos = column_names[q.table_name];
     auto&& ind = indexes[col_pos];
     auto key = atoll(q.condition.value.c_str());
-    auto fnode = ind.search_node(key);
+    bool op_before = op == Op::ne || op == Op::le || op == Op::lt;
+    bool op_eq = op == Op::eq || op == Op::le || op == Op::ge;
+    bool op_after = op == Op::ne || op == Op::ge || op == Op::gt;
     bool started_seq = false;
-    while(fnode != NODE_END) {
-      MemNode node(ind.file, fnode);
-      for (int i = 0; i < node.size; i++) {
-        data_file.seekg(node.block[i].node, data_file.beg);
-        auto row = row_serializer.read_row(data_file);
-        bool cond_met = apply_op(std::get<(int)DBType::int64>(row[col_pos]), q.condition.op, key);
-        if (cond_met) {
-          started_seq = true;
-        } else {
-          if (started_seq) {
+    if (op_before) {
+      auto fnode = ind.search_node(MIN_KEY);
+      while(fnode != NODE_END) {
+        MemNode node(ind.file, fnode);
+        for (int i = 0; i < node.size; i++) {
+          data_file.seekg(node.block[i].node, data_file.beg);
+          auto row = row_serializer.read_row(data_file);
+          bool cond_met = apply_op(std::get<(int)DBType::int64>(row[col_pos]), Op::lt, key);
+          if (!cond_met) {
             break;
-          } else {
-            continue;
           }
+          data_file.seekg(node.block[i].node, data_file.beg);
+          row_serializer.print_row(data_file, col_indices);
+          std::cout << '\n';
         }
-        data_file.seekg(node.block[i].node, data_file.beg);
-        row_serializer.print_row(data_file, col_indices);
-        std::cout << '\n';
+        fnode = node.next;
       }
-      fnode = node.next;
+    }
+    if (op_eq) {
+      auto [fnode, first_pos] = ind.search_record(key);
+      while(fnode != NODE_END) {
+        MemNode node(ind.file, fnode);
+        for (int i = first_pos; i < node.size; i++) {
+          data_file.seekg(node.block[i].node, data_file.beg);
+          auto row = row_serializer.read_row(data_file);
+          bool cond_met = apply_op(std::get<(int)DBType::int64>(row[col_pos]), Op::eq, key);
+          if (!cond_met) {
+            break;
+          }
+          data_file.seekg(node.block[i].node, data_file.beg);
+          row_serializer.print_row(data_file, col_indices);
+          std::cout << '\n';
+        }
+        fnode = node.next;
+      }
+    }
+    if (op_after) {
+      auto [fnode, first_pos] = ind.search_record(key + 1);
+      while(fnode != NODE_END) {
+        MemNode node(ind.file, fnode);
+        for (int i = first_pos; i < node.size; i++) {
+          data_file.seekg(node.block[i].node, data_file.beg);
+          auto row = row_serializer.read_row(data_file);
+          bool cond_met = apply_op(std::get<(int)DBType::int64>(row[col_pos]), Op::gt, key);
+          if (!cond_met) {
+            break;
+          }
+          data_file.seekg(node.block[i].node, data_file.beg);
+          row_serializer.print_row(data_file, col_indices);
+          std::cout << '\n';
+        }
+        fnode = node.next;
+      }
     }
   } else {
     // int curr = data_file.tellg();

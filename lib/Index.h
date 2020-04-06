@@ -10,7 +10,7 @@ namespace fs = std::filesystem;
 
 using Key = INT64_type;
 using Node = meta_int;
-constexpr int capacity = 4;
+constexpr int capacity = 100;
 constexpr Key MIN_KEY = std::numeric_limits<Key>::min();
 constexpr Node NODE_END = -1;
 
@@ -45,7 +45,8 @@ class INT64Index {
   void read_root_ref();
   void write_root_ref();
 
-  Node search_node(Key key, Node node = NODE_END);
+  Node search_node(Key key, bool deep = false, Node node = NODE_END);
+  std::pair<Node, int>  search_record(Key key, Node node = NODE_END);
 
   std::optional<Pair> insert(Key key, int offset, Node node = NODE_END);
   
