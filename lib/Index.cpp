@@ -170,7 +170,7 @@ std::pair<Node, int> INT64Index::search_record(Key key, Node fnode) {
       return {found, i};
     }
   }
-  throw SystemError("This should never happen");
+  return {NODE_END, fnode};
 }
 
 std::optional<Pair> INT64Index::insert(Key key, int offset, Node fnode) {

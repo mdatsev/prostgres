@@ -96,7 +96,7 @@ std::string ParserHelper::get_literal() {
       if (is_digit(input[i]) || input[i] == '-') {
         numeric = true;
         start = i;
-      } else if (input[i] == '\'') {
+      } else if (input[i] == '\'' || input[i] == '"') {
         numeric = false;
         start = i + 1;
       } else if (is_whitespace(input[i])) {
@@ -108,7 +108,7 @@ std::string ParserHelper::get_literal() {
       if (numeric && !is_digit(input[i])) {
         end = i;
         break;
-      } else if (!numeric && input[i] == '\'') {
+      } else if (!numeric && (input[i] == '\'' || input[i] == '"')) {
         end = i;
         break;
       }

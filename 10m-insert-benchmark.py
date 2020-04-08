@@ -10,15 +10,15 @@ def printstderr(s):
   sys.stderr.flush()
 
 def get_value():
-  return random.randint(-99999999, 99999999)
+  return random.randint(-9999999, 9999999)
 
-print("create table test (a int, b int, c int, d int);")
+print("create table test (a int, b int, c int, d string);")
 for r in range(nrows):
   if (r % 100000 == 0):
     printstderr(f'{r}/{nrows}')
   print("insert into test (a, b, c, d) values (", end='')
   for c in range(ncols):
-    print(get_value(), end=('' if c==ncols-1 else ','))
+    print(get_value() if c < ncols - 1 else f'"{get_value()}"', end=('' if c==ncols-1 else ','))
   print(');')
   
 # 10 min to generate
